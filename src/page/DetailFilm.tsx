@@ -11,6 +11,7 @@ import { Button } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import SCREEN_NAME from '../share/menu';
 
 type MovieDetail = {
   name: string;
@@ -36,7 +37,7 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
 
   useEffect(() => {
     // TODO: Replace with actual API call using route.params.movieSlug
-    fetch(`${API_URL}${route.params.movieSlug}`)
+    fetch(`${API_URL}${route.params?.movieSlug}`)
       .then(response => response.json())
       .then(data => {
         setMovie(data.movie);
@@ -46,7 +47,7 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
         console.error('Error fetching movie details:', error);
         setLoading(false);
       });
-  }, [route.params.movieSlug]);
+  }, [route.params?.movieSlug]);
 
   if (!movie) return null;
 
@@ -90,7 +91,7 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
             mode="contained"
             style={styles.playButton}
             icon="play"
-            onPress={() => {/* TODO: Implement play functionality */ }}
+            onPress={() => navigation.navigate(SCREEN_NAME.WATCH_PAGE, { movieSlug: route.params?.movieSlug })}
           >
             Xem phim
           </Button>

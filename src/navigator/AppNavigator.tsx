@@ -8,6 +8,7 @@ import Blog from '../page/Blog';
 import BlogDetail from '../page/Blogdetail';
 import Wishlist from '../page/WatchlistPage';
 import RegisterPage from '../page/Register';
+import WatchPage from '../page/Watchpage';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -72,6 +73,15 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
           options={{
             headerShown: false,
             title: 'Đăng ký',
+            headerTintColor: ColorGeneral.primary,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.WATCH_PAGE}
+          component={WatchPage}
+          options={{
+            headerShown: false,
+            title: 'Xem phim',
             headerTintColor: ColorGeneral.primary,
           }}
         />

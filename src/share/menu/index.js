@@ -7,6 +7,7 @@ const SCREEN_NAME = {
     BLOG_DETAIL        : 'BlogDetail',
     WISHLIST           : 'Wishlist',
     REGISTER           : 'Register',
+    WATCH_PAGE         : 'WatchPage',
     
 }
 
