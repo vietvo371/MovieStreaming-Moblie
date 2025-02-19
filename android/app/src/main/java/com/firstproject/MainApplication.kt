@@ -1,4 +1,4 @@
-package com.firstproject
+package com.MovieMobile
 
 import android.app.Application
 import com.facebook.react.PackageList

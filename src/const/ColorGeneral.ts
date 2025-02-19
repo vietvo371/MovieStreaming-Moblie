@@ -1,0 +1,23 @@
+export const ColorGeneral = {
+    primary     : "#9747FF",
+    secondary   : "#85929e",
+    success     : "#2ecc71",
+    warning     : "#f1c40f",
+    danger      : "#e74c3c",
+    info        : "#3498db",
+    light       : "#ecf0f1",
+    dark        : "#2c3e50",
+    blue        : "#3498db",
+    white       : "#FFFFFF",
+    black       : "#000000",
+    gray        : "#808080",
+    lightGray   : "#D3D3D3",
+    darkGray    : "#A9A9A9",
+    red         : "#FF0000",
+    green       : "#00FF00",
+    yellow      : "#FFFF00",
+    orange      : "#FFA500",
+    purple      : "#800080",
+    pink        : "#FFC0CB",
+};
+

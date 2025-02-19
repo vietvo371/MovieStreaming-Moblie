@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import React, {useState} from 'react';
+import {View, Text, TextInput, Button, StyleSheet} from 'react-native';
 
-const Login = (): React.JSX.Element => {
+const Login = ({navigation}: {navigation: any}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
@@ -27,7 +27,7 @@ const Login = (): React.JSX.Element => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} />
+      <Button title="Login" onPress={() => navigation.navigate('MainApp')} />
     </View>
   );
 };
