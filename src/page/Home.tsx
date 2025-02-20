@@ -95,7 +95,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
           style={styles.vipButton}
           labelStyle={styles.vipButtonText}
           icon="crown"
-          onPress={() => {/* TODO: Implement VIP registration */}}
+          onPress={() => navigation.navigate('GoiVip')}
         >
           VIP
         </Button>

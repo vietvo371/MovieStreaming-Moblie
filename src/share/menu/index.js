@@ -8,6 +8,7 @@ const SCREEN_NAME = {
     WISHLIST           : 'Wishlist',
     REGISTER           : 'Register',
     WATCH_PAGE         : 'WatchPage',
+    GOIVIP             : 'GoiVip',
     
 }
 

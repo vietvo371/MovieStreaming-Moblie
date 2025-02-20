@@ -7,6 +7,7 @@ import WatchlistPage from '../page/WatchlistPage';
 import BlogPage from '../page/Blog';
 import SearchPage from '../page/SearchPage';
 import ProfilePage from '../page/Profile';
+import GoiVip from '../page/GoiVip';
 const Tab = createBottomTabNavigator();
 
 const TabNavigator = () => {
