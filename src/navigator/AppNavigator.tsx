@@ -10,6 +10,7 @@ import Wishlist from '../page/WatchlistPage';
 import RegisterPage from '../page/Register';
 import WatchPage from '../page/Watchpage';
 import GoiVip from '../page/GoiVip';
+import Loading from '../page/Loading';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -21,16 +22,12 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
-        initialRouteName={SCREEN_NAME.LOGIN}>
+        initialRouteName={SCREEN_NAME.LOADING}>
+        <Stack.Screen name="Loading" component={Loading} />
         <Stack.Screen name="MainApp" component={TabNavigator} />
         <Stack.Screen
           name={SCREEN_NAME.LOGIN}
           component={LoginPage}
-          options={{
-            headerShown: false,
-            title: 'Đăng nhập',
-            headerTintColor: ColorGeneral.primary,
-          }}
         />
         <Stack.Screen
           name={SCREEN_NAME.DETAIL_FILM}

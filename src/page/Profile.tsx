@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,41 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import api from '../utils/api';
+import { removeToken } from '../utils/TokenManager';
+import { DisplayError } from '../../general/Notification';
 
-const ProfilePage = () => {
+interface User {
+  id: number;
+  ho_va_ten: string;
+  email: string;
+  so_dien_thoai: string;
+  avatar: string;
+  id_goi_vip: number;
+}
+const ProfilePage = ({ navigation }: { navigation: any }) => {
+  const [user, setUser] = useState<User | null>(null);
+
+  const handleLogout = () => {
+    removeToken();
+    navigation.navigate('Login');
+  };
+  const getUser = async () => {
+    api.get('/khach-hang/lay-du-lieu-profile').then((res) => {
+      if (res.data.status) {
+        setUser(res.data.obj_user);
+      } else {
+        DisplayError(res);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+  };
+  useEffect(() => {
+    getUser();
+  }, []);
+  console.log(user);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -21,7 +54,7 @@ const ProfilePage = () => {
           <View style={styles.avatarContainer}>
             <Icon name="account-circle" size={80} color="#FF4500" />
           </View>
-          <Text style={styles.username}>Người dùng</Text>
+          <Text style={styles.username}>{user?.ho_va_ten}</Text>
           <TouchableOpacity style={styles.editButton}>
             <Text style={styles.editButtonText}>Chỉnh sửa thông tin</Text>
           </TouchableOpacity>
@@ -47,7 +80,7 @@ const ProfilePage = () => {
             <Icon name="chevron-right" size={24} color="#666" />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.menuItem, styles.logoutButton]}>
+          <TouchableOpacity onPress={handleLogout} style={[styles.menuItem, styles.logoutButton]}>
             <Icon name="logout" size={24} color="#FF4500" />
             <Text style={[styles.menuText, styles.logoutText]}>Đăng xuất</Text>
           </TouchableOpacity>

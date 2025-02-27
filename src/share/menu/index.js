@@ -9,6 +9,7 @@ const SCREEN_NAME = {
     REGISTER           : 'Register',
     WATCH_PAGE         : 'WatchPage',
     GOIVIP             : 'GoiVip',
+    LOADING            : 'Loading',
     
 }
 

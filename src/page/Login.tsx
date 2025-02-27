@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,20 +15,48 @@ import {
 } from 'react-native';
 
 import LinearGradient from 'react-native-linear-gradient';
+import api from '../utils/api';
+import { DisplayError, DisplayMessage } from '../../general/Notification';
+import { saveToken, saveUser } from '../utils/TokenManager';
 
-const {width} = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-const Login = ({navigation}: {navigation: any}) => {
+const Login = ({ navigation }: { navigation: any }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = () => {
-    if (!username || !password) {
-      Alert.alert('Vui lòng nhập đầy đủ thông tin!');
-      return;
-    }
-    navigation.navigate('MainApp');
+    // if (!username || !password) {
+    //   Alert.alert('Vui lòng nhập đầy đủ thông tin!');
+    //   return;
+    // }
+    api.post('/khach-hang/login', {
+      email: username,
+      password: password,
+    }).then((res) => {
+      if (res.data.status) {
+        DisplayMessage(res);
+        saveToken(res.data.token);
+        saveUser(res.data.user);
+        navigation.replace('MainApp');
+      } else {
+        if (res.data.message) {
+          Alert.alert('Thông báo', res.data.message);
+        } else {
+          Alert.alert('Thông báo', 'Đăng nhập thất bại');
+        }
+      }
+    }).catch((err) => {
+      if (err.response?.status === 422) {
+        const errorMessage = err.response.data?.message || 'Dữ liệu không hợp lệ';
+        Alert.alert('Thông báo', errorMessage);
+      } else {
+        const errorMessage = err.response?.data?.message || 'Đã có lỗi xảy ra';
+        Alert.alert('Thông báo', errorMessage);
+      }
+      console.log('Login error:', err);
+    });
   };
 
   return (
@@ -37,21 +65,21 @@ const Login = ({navigation}: {navigation: any}) => {
       <LinearGradient
         colors={['#0D0D0D', '#1A1A1A', '#0D0D0D']}
         style={styles.gradient}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.content}
         >
           <View style={styles.scrollContainer}>
             <View style={styles.headerContainer}>
-              <Image 
-                source={require('../assets/image/logoW.png')} 
+              <Image
+                source={require('../assets/image/logoW.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
               <Text style={styles.title}>Đăng nhập</Text>
               <Text style={styles.subtitle}>Chào mừng bạn trở lại!</Text>
             </View>
-            
+
             <View style={styles.formContainer}>
               <View style={styles.inputContainer}>
                 <Text style={styles.inputLabel}>Tên đăng nhập</Text>
@@ -77,7 +105,7 @@ const Login = ({navigation}: {navigation: any}) => {
                     secureTextEntry={!showPassword}
                     autoCapitalize="none"
                   />
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.eyeIcon}
                     onPress={() => setShowPassword(!showPassword)}
                   >
@@ -86,21 +114,21 @@ const Login = ({navigation}: {navigation: any}) => {
                 </View>
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.forgotPassword}
                 onPress={() => navigation.navigate('ForgotPassword')}
               >
                 <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity 
-                style={styles.loginButton} 
+              <TouchableOpacity
+                style={styles.loginButton}
                 onPress={handleLogin}
               >
                 <LinearGradient
                   colors={['#007AFF', '#00A2FF']}
-                  start={{x: 0, y: 0}}
-                  end={{x: 1, y: 0}}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                   style={styles.gradientButton}
                 >
                   <Text style={styles.loginButtonText}>ĐĂNG NHẬP</Text>
