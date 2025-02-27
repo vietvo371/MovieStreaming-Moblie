@@ -12,14 +12,13 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import api from '../utils/api';
 
 const categories = [
   { id: 'single', name: 'Phim Lẻ', icon: 'movie-outline' },
   { id: 'series', name: 'Phim Bộ', icon: 'movie-roll' },
   { id: 'anime', name: 'Hoạt Hình', icon: 'animation' },
 ];
-const API_URL = 'https://wopai-be.dzfullstack.edu.vn/api/phim/lay-du-lieu-show';
-
 // Add type for navigation
 type RootStackParamList = {
   DetailFilm: { movieSlug: string };
@@ -36,25 +35,51 @@ const SearchPage = () => {
     ten_phim: string;
     hinh_anh: string;
   }
-
+  const [keySearch, setKeySearch] = useState('');
+  const [checkSearch, setCheckSearch] = useState(false);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [hot_movies, setHotMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const getMovies = async () => {
+    try {
+      const response = await api.get('phim/lay-du-lieu-show');
+      setHotMovies(response.data.phim_hot);
+      setLoading(false);
+    } catch (error) {
+      // setError(error.message);
+      setLoading(false);
+    }
+  };
+
+  const searchMovies = async () => {
+    try {
+      const response = await api.post(`phim/thong-tin-tim`, {
+        key: keySearch
+      });
+      setMovies(response.data.phim);
+      console.log(movies);
+    } catch (error) {
+      // setError(error.message);
+    }
+  };
+  useEffect(() => {
+    getMovies();
+  }, []);
 
   useEffect(() => {
-    fetch(API_URL)
-      .then((response) => response.json())
-      .then((data) => {
-        setMovies(data.phim_moi_cap_nhats);
-        setHotMovies(data.phim_hot);
-        setLoading(false);
-      })
-      .catch((error) => {
-        setError(error.message);
-        setLoading(false);
-      });
-  }, []);
+    if (keySearch.trim()) {
+      setCheckSearch(true);
+      const debounceSearch = setTimeout(() => {
+        searchMovies();
+      }, 500);
+
+      return () => clearTimeout(debounceSearch);
+    } else {
+      setCheckSearch(false);
+      setMovies([]);
+    }
+  }, [keySearch]);
 
   return (
     <View style={styles.container}>
@@ -71,8 +96,8 @@ const SearchPage = () => {
           style={styles.searchInput}
           placeholder="Tìm tên phim..."
           placeholderTextColor="#666"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
+          value={keySearch}
+          onChangeText={setKeySearch}
         />
       </View>
 
@@ -104,24 +129,42 @@ const SearchPage = () => {
         ))}
       </View>
 
-      {/* Popular Movies Grid */}
+      {/* Movies Grid */}
       <ScrollView style={styles.content}>
-        <Text style={styles.sectionTitle}>Phổ biến</Text>
+        <Text style={styles.sectionTitle}>
+          {checkSearch ? 'Kết quả tìm kiếm' : 'Phổ biến'}
+        </Text>
         <View style={styles.moviesGrid}>
-          {hot_movies.map(movie => (
-            <TouchableOpacity
-              key={movie.id}
-              style={styles.movieCard}
-              onPress={() => navigation.navigate('DetailFilm', { movieSlug: movie.slug_phim })}
-            >
-              <Image source={{ uri: movie.hinh_anh }} style={styles.movieImage} />
-              <LinearGradient
-                colors={['transparent', 'rgba(0,0,0,0.8)']}
-                style={styles.gradient}
-              />
-              <Text style={styles.movieTitle}>{movie.ten_phim}</Text>
-            </TouchableOpacity>
-          ))}
+          {checkSearch 
+            ? movies.map(movie => (
+                <TouchableOpacity
+                  key={movie.id}
+                  style={styles.movieCard}
+                  onPress={() => navigation.navigate('DetailFilm', { movieSlug: movie.slug_phim })}
+                >
+                  <Image source={{ uri: movie.hinh_anh }} style={styles.movieImage} />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                    style={styles.gradient}
+                  />
+                  <Text style={styles.movieTitle}>{movie.ten_phim}</Text>
+                </TouchableOpacity>
+              ))
+            : hot_movies.map(movie => (
+                <TouchableOpacity
+                  key={movie.id}
+                  style={styles.movieCard}
+                  onPress={() => navigation.navigate('DetailFilm', { movieSlug: movie.slug_phim })}
+                >
+                  <Image source={{ uri: movie.hinh_anh }} style={styles.movieImage} />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                    style={styles.gradient}
+                  />
+                  <Text style={styles.movieTitle}>{movie.ten_phim}</Text>
+                </TouchableOpacity>
+              ))
+          }
         </View>
       </ScrollView>
     </View>

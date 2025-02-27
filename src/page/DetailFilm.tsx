@@ -6,48 +6,62 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Button } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import SCREEN_NAME from '../share/menu';
+import api from '../utils/api';
 
 type MovieDetail = {
-  name: string;
-  origin_name: string;
-  content: string;
-  thumb_url: string;
-  poster_url: string;
-  year: number;
-  quality: string;
-  lang: string;
-  episode_current: string;
-  category: Array<{ name: string }>;
-  country: Array<{ name: string }>;
+  id: number;
+  ten_phim: string;
+  ten_loai_phim: string;
+  mo_ta: string;
+  hinh_anh: string;
+  nam_san_xuat: number;
+  chat_luong: string;
+  ngon_ngu: string;
+  so_tap_phim: number;
+  tong_tap: number;
+  ten_the_loais: string;
+  quoc_gia: string;
+  dao_dien: string;
+  trailer_url: string;
+  slug_phim: string;
 };
-const API_URL = 'https://ophim1.com/phim/';
-
 
 type DetailFilmProps = NativeStackScreenProps<any, 'DetailFilm'>;
 
 const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // TODO: Replace with actual API call using route.params.movieSlug
-    fetch(`${API_URL}${route.params?.movieSlug}`)
-      .then(response => response.json())
-      .then(data => {
-        setMovie(data.movie);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching movie details:', error);
-        setLoading(false);
+  const getMovieDetail = async () => {
+    try {
+      const response = await api.post('phim/lay-data-delist', {
+        slug: route.params?.movieSlug
       });
-  }, [route.params?.movieSlug]);
+      setMovie(response.data.phim);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
+      setLoading(false);
+    }
+  };
+  console.log(movie);
+  useEffect(() => {
+    getMovieDetail();
+  }, [route.params?.phim]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   if (!movie) return null;
 
@@ -63,23 +77,23 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
       <ScrollView style={styles.content}>
         {/* Movie Poster Section */}
         <View style={styles.posterContainer}>
-          <Image source={{ uri: movie.thumb_url }} style={styles.posterImage} />
+          <Image source={{ uri: movie.hinh_anh }} style={styles.posterImage} />
           <LinearGradient
             colors={['transparent', '#0D0D0D']}
             style={styles.gradientOverlay}
           />
           <View style={styles.movieInfo}>
-            <Text style={styles.title}>{movie.name}</Text>
-            <Text style={styles.originalTitle}>{movie.origin_name}</Text>
+            <Text style={styles.title}>{movie.ten_phim}</Text>
+            <Text style={styles.originalTitle}>{movie.ten_loai_phim}</Text>
             <View style={styles.tags}>
               <View style={styles.tag}>
-                <Text style={styles.tagText}>{movie.quality}</Text>
+                <Text style={styles.tagText}>{movie.chat_luong}</Text>
               </View>
               <View style={styles.tag}>
-                <Text style={styles.tagText}>{movie.lang}</Text>
+                <Text style={styles.tagText}>{movie.ngon_ngu}</Text>
               </View>
               <View style={styles.tag}>
-                <Text style={styles.tagText}>{movie.year}</Text>
+                <Text style={styles.tagText}>{movie.nam_san_xuat}</Text>
               </View>
             </View>
           </View>
@@ -108,16 +122,18 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
 
         {/* Episode Status */}
         <View style={styles.episodeStatus}>
-          <Text style={styles.episodeText}>{movie.episode_current}</Text>
+          <Text style={styles.episodeText}>
+            Tập {movie.so_tap_phim}/{movie.tong_tap}
+          </Text>
         </View>
 
         {/* Categories */}
         <View style={styles.categories}>
           <Text style={styles.sectionTitle}>Thể loại</Text>
           <View style={styles.categoryTags}>
-            {movie.category.map((cat, index) => (
+            {movie.ten_the_loais.split(', ').map((category, index) => (
               <View key={index} style={styles.categoryTag}>
-                <Text style={styles.categoryText}>{cat.name}</Text>
+                <Text style={styles.categoryText}>{category}</Text>
               </View>
             ))}
           </View>
@@ -127,8 +143,21 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
         <View style={styles.description}>
           <Text style={styles.sectionTitle}>Nội dung phim</Text>
           <Text style={styles.descriptionText}>
-            {movie.content.replace(/<\/?[^>]+(>|$)/g, '')}
+            {movie.mo_ta.replace(/<\/?[^>]+(>|$)/g, '')}
           </Text>
+        </View>
+
+        {/* Additional Info */}
+        <View style={styles.additionalInfo}>
+          <Text style={styles.sectionTitle}>Thông tin thêm</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Đạo diễn:</Text>
+            <Text style={styles.infoValue}>{movie.dao_dien}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Quốc gia:</Text>
+            <Text style={styles.infoValue}>{movie.quoc_gia}</Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -263,6 +292,29 @@ const styles = StyleSheet.create({
     color: '#CCC',
     fontSize: 14,
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0D0D0D',
+  },
+  additionalInfo: {
+    padding: 16,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  infoLabel: {
+    color: '#999',
+    width: 100,
+    fontSize: 14,
+  },
+  infoValue: {
+    color: '#FFF',
+    flex: 1,
+    fontSize: 14,
   },
 });
 

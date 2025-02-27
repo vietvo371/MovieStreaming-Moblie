@@ -11,6 +11,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useWindowDimensions } from 'react-native';
+import api from '../utils/api';
 
 interface BlogPost {
   id: number;
@@ -33,26 +34,30 @@ const BlogDetail = ({ route, navigation }: BlogDetailProps) => {
   const [loading, setLoading] = useState(true);
   const { width } = useWindowDimensions();
 
-  useEffect(() => {
-    fetch('https://wopai-be.dzfullstack.edu.vn/api/bai-viet/lay-du-lieu-delist-blog', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+  const getBlogDetail = async () => {
+    try {
+      const response = await api.post('bai-viet/lay-du-lieu-delist-blog', {
         slug: route.params.blogSlug
-      })
-    })
-      .then(response => response.json())
-      .then(data => {
-        setPost(data.bai_viet);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching blog detail:', error);
-        setLoading(false);
       });
+      setPost(response.data.bai_viet);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching blog detail:', error);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getBlogDetail();
   }, [route.params.blogSlug]);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF4500" />
+      </View>
+    );
+  }
 
   if (loading) {
     return (
@@ -68,8 +73,8 @@ const BlogDetail = ({ route, navigation }: BlogDetailProps) => {
     <View style={styles.container}>
       {/* Header with Back Button */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          onPress={() => navigation.goBack()} 
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
           <Icon name="arrow-left" size={24} color="#FFF" />
@@ -78,8 +83,8 @@ const BlogDetail = ({ route, navigation }: BlogDetailProps) => {
 
       <ScrollView style={styles.content}>
         {/* Featured Image */}
-        <Image 
-          source={{ uri: post.hinh_anh }} 
+        <Image
+          source={{ uri: post.hinh_anh }}
           style={styles.featuredImage}
         />
 
@@ -90,11 +95,11 @@ const BlogDetail = ({ route, navigation }: BlogDetailProps) => {
           <Text style={styles.date}>
             {new Date(post.created_at).toLocaleDateString('vi-VN')}
           </Text>
-          
+
           <Text style={styles.description}>{post.mo_ta}</Text>
-          
+
           <View style={styles.divider} />
-          
+
           <Text style={styles.detailContent}>{post.mo_ta_chi_tiet}</Text>
         </View>
       </ScrollView>

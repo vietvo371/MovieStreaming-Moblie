@@ -12,9 +12,9 @@ import { Card, Button } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
 import DetailFilm from './DetailFilm';
 import LinearGradient from 'react-native-linear-gradient';
+import api from '../utils/api';
 
 
-const API_URL = 'https://wopai-be.dzfullstack.edu.vn/api/phim/lay-du-lieu-show';
 
 function Home({ navigation }: { navigation: NavigationProp<any> }) {
   interface Movie {
@@ -26,16 +26,19 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
 
   const [movies, setMovies] = useState<Movie[]>([]);
   const [hot_movies, setHotMovies] = useState<Movie[]>([]);
+  const [phim_xem_nhieu_nhat, setPhimXemNhieuNhat] = useState<Movie[]>([]);
+  const [done_movies, setDoneMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(API_URL)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('Fetched Data:', data);
-        setMovies(data.phim_moi_cap_nhats);
-        setHotMovies(data.phim_hot);
+    api.get('phim/lay-du-lieu-show')
+      .then((response) => {
+        console.log('Fetched Data:', response.data);
+        setMovies(response.data.phim_moi_cap_nhats);
+        setHotMovies(response.data.phim_hot);
+        setDoneMovies(response.data.tat_ca_phim_hoan_thanh);
+        setPhimXemNhieuNhat(response.data.phim_xem_nhieu_nhat);
         setLoading(false);
       })
       .catch((error) => {
@@ -62,13 +65,13 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
   }
 
   const renderMovieCard = (item: Movie, type: 'new' | 'hot') => (
-    <Card 
-      style={styles.card} 
-      onPress={() => navigation.navigate('DetailFilm', { movieSlug: item.slug_phim})}
+    <Card
+      style={styles.card}
+      onPress={() => navigation.navigate('DetailFilm', { movieSlug: item.slug_phim })}
     >
-      <Card.Cover 
-        source={{ uri: item.hinh_anh }} 
-        style={styles.movieImage} 
+      <Card.Cover
+        source={{ uri: item.hinh_anh }}
+        style={styles.movieImage}
       />
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.9)']}
@@ -90,8 +93,8 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
       {/* Header */}
       <View style={styles.header}>
         <Image source={require('../assets/image/logoW.png')} style={styles.logoImage} />
-        <Button 
-          mode="contained" 
+        <Button
+          mode="contained"
           style={styles.vipButton}
           labelStyle={styles.vipButtonText}
           icon="crown"
@@ -107,8 +110,8 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
         <View style={styles.heroSection}>
           <LinearGradient
             colors={['#FF4500', '#FF8C00']}
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 0}}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={styles.heroGradient}
           >
             <Text style={styles.mainTitle}>Khám phá</Text>
@@ -119,11 +122,30 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
         {/* Movie Sections */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Phim mới cập nhật</Text>
-            <Button 
-              mode="text" 
+            <Text style={styles.sectionTitle}>Phim xem nhiều nhất</Text>
+            <Button
+              mode="text"
               textColor="#FF4500"
-              onPress={() => {/* TODO: Navigate to all new movies */}}
+              onPress={() => {/* TODO: Navigate to all hot movies */ }}
+            >
+              Xem tất cả
+            </Button>
+          </View>
+          <FlatList
+            data={phim_xem_nhieu_nhat}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => renderMovieCard(item, 'hot')}
+          />
+        </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Phim mới cập nhật</Text>
+            <Button
+              mode="text"
+              textColor="#FF4500"
+              onPress={() => {/* TODO: Navigate to all new movies */ }}
             >
               Xem tất cả
             </Button>
@@ -137,13 +159,33 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
           />
         </View>
 
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Phim đã hoàn thành</Text>
+            <Button
+              mode="text"
+              textColor="#FF4500"
+              onPress={() => {/* TODO: Navigate to all hot movies */ }}
+            >
+              Xem tất cả
+            </Button>
+          </View>
+          <FlatList
+            data={done_movies}
+            keyExtractor={(item) => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => renderMovieCard(item, 'hot')}
+          />
+        </View>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Đề xuất cho bạn</Text>
-            <Button 
-              mode="text" 
+            <Button
+              mode="text"
               textColor="#FF4500"
-              onPress={() => {/* TODO: Navigate to all hot movies */}}
+              onPress={() => {/* TODO: Navigate to all hot movies */ }}
             >
               Xem tất cả
             </Button>

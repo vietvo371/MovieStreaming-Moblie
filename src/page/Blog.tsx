@@ -11,6 +11,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import api from '../utils/api';
 
 interface BlogPost {
   id: number;
@@ -25,7 +26,6 @@ type RootStackParamList = {
   BlogDetail: { blogSlug: string };
 };
 
-const API_URL = 'https://wopai-be.dzfullstack.edu.vn/api/bai-viet/lay-du-lieu-show';
 
 const BlogPage = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -33,10 +33,9 @@ const BlogPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(API_URL)
-      .then(response => response.json())
-      .then(data => {
-        setBlogPosts(data.bai_viet.dataAdmin.data);
+    api.get('bai-viet/lay-du-lieu-show')
+      .then(response => {
+        setBlogPosts(response.data.bai_viet.dataAdmin.data);
         setLoading(false);
       })
       .catch(error => {
