@@ -15,13 +15,16 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import api from '../utils/api';
 
 const categories = [
-  { id: 'single', name: 'Phim Lẻ', icon: 'movie-outline' },
-  { id: 'series', name: 'Phim Bộ', icon: 'movie-roll' },
-  { id: 'anime', name: 'Hoạt Hình', icon: 'animation' },
+  { id: 'single', name: 'Phim Lẻ', icon: 'movie-outline', slug: 'phim-le' },
+  { id: 'series', name: 'Phim Bộ', icon: 'movie-roll', slug: 'phim-bo' },
+  { id: 'anime', name: 'Hoạt Hình', icon: 'animation', slug: 'phim-hoat-hinh' },
 ];
+
 // Add type for navigation
 type RootStackParamList = {
   DetailFilm: { movieSlug: string };
+  TypeFilm: { slug: string, ten_loai_phim: string };
+  GenreFilm: { slug: string, ten_the_loai: string };
 };
 
 const SearchPage = () => {
@@ -35,17 +38,37 @@ const SearchPage = () => {
     ten_phim: string;
     hinh_anh: string;
   }
+ 
+  interface Genre {
+    id: number;
+    ten_the_loai: string,
+    slug_the_loai: string,
+    tinh_trang: number,
+  }
   const [keySearch, setKeySearch] = useState('');
+  const [genres, setGenres] = useState<Genre[]>([]);
   const [checkSearch, setCheckSearch] = useState(false);
   const [movies, setMovies] = useState<Movie[]>([]);
   const [hot_movies, setHotMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const getGenres = async () => {
+    try {
+      const response = await api.get('lay-data-the-loai-home');
+      setGenres(response.data.the_loai);
+    } catch (error) {
+      console.error('Error fetching genres:', error);
+    }
+  };
+
   const getMovies = async () => {
     try {
       const response = await api.get('phim/lay-du-lieu-show');
-      setHotMovies(response.data.phim_hot);
-      setLoading(false);
+      if(response.status === 200){  
+        setHotMovies(response.data.phim_hot);
+        setLoading(false);
+      }
     } catch (error) {
       // setError(error.message);
       setLoading(false);
@@ -58,13 +81,13 @@ const SearchPage = () => {
         key: keySearch
       });
       setMovies(response.data.phim);
-      console.log(movies);
     } catch (error) {
       // setError(error.message);
     }
   };
   useEffect(() => {
     getMovies();
+    getGenres();
   }, []);
 
   useEffect(() => {
@@ -86,7 +109,6 @@ const SearchPage = () => {
       {/* Search Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Tìm kiếm phim</Text>
-        <Text style={styles.headerSubtitle}>Khám phá bộ sưu tập phim của chúng tôi</Text>
       </View>
 
       {/* Search Bar */}
@@ -110,7 +132,10 @@ const SearchPage = () => {
               styles.categoryButton,
               activeCategory === category.id && styles.activeCategoryButton,
             ]}
-            onPress={() => setActiveCategory(category.id)}
+            onPress={() => {
+              setActiveCategory(category.id);
+              navigation.navigate('TypeFilm', { slug: category.slug , ten_loai_phim: category.name});
+            }}
           >
             <Icon
               name={category.icon}
@@ -129,6 +154,27 @@ const SearchPage = () => {
         ))}
       </View>
 
+      {/* Genres Grid */}
+      <View style={styles.genresSection}>
+        <Text style={styles.sectionTitle}>Thể Loại</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.genresRow}>
+            {genres.map(genre => (
+              <TouchableOpacity
+                key={genre.id}
+                style={styles.genreButton}
+                onPress={() => navigation.navigate('GenreFilm', { 
+                  slug: genre.slug_the_loai,
+                  ten_the_loai: genre.ten_the_loai 
+                })}
+              >
+                <Text style={styles.genreText}>{genre.ten_the_loai}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
       {/* Movies Grid */}
       <ScrollView style={styles.content}>
         <Text style={styles.sectionTitle}>
@@ -140,7 +186,7 @@ const SearchPage = () => {
                 <TouchableOpacity
                   key={movie.id}
                   style={styles.movieCard}
-                  onPress={() => navigation.navigate('DetailFilm', { movieSlug: movie.slug_phim })}
+                  onPress={() => navigation.navigate('DetailFilm', { movieSlug: movie.slug_phim ,})}
                 >
                   <Image source={{ uri: movie.hinh_anh }} style={styles.movieImage} />
                   <LinearGradient
@@ -276,6 +322,28 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  genresSection: {
+    marginBottom: 20,
+  },
+  genresRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+  },
+  genreButton: {
+    backgroundColor: '#1E1E1E',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginHorizontal: 4,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  genreText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 

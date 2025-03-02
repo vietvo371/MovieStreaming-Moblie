@@ -13,6 +13,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
+import api from '../utils/api';
+import { DisplayError } from '../../general/Notification';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - 48) / 2;
@@ -26,9 +28,10 @@ interface Movie {
 
 type RootStackParamList = {
   DetailFilm: { movieSlug: string };
+  Home: undefined;
 };
 
-const API_URL = 'https://wopai-be.dzfullstack.edu.vn/api/phim/lay-du-lieu-show';
+// const API_URL = 'https://wopai-be.dzfullstack.edu.vn/api/phim/lay-du-lieu-show';
 
 const WatchlistPage = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -36,19 +39,27 @@ const WatchlistPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const getWatchlist = async () => {
+    api.get('/khach-hang/yeu-thich/lay-du-lieu').
+    then((res) => {
+      if (res.data.yeu_thich) {
+        setMovies(res.data.yeu_thich);
+        setLoading(false);
+      } else {
+        // DisplayError(res.data.message);
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+  };
   useEffect(() => {
-    fetch(API_URL)
-      .then((response) => response.json())
-      .then(data => {
-        setMovies(data.phim_moi_cap_nhats);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching watchlist:', error);
-        setError('Không thể tải danh sách phim yêu thích');
-        setLoading(false);
-      });
-  }, []);
+    const unsubscribe = navigation.addListener('focus', () => {
+      getWatchlist();
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   if (loading) {
     return (
@@ -70,7 +81,7 @@ const WatchlistPage = () => {
           <View style={styles.emptyState}>
             <Icon name="heart-outline" size={64} color="#FF4500" />
             <Text style={styles.emptyText}>Chưa có phim yêu thích</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.browseButton}
               onPress={() => navigation.navigate('Home')}
             >
@@ -93,7 +104,7 @@ const WatchlistPage = () => {
                   <Text style={styles.movieTitle} numberOfLines={2}>
                     {movie.ten_phim}
                   </Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.heartButton}
                     onPress={(e) => {
                       e.stopPropagation();

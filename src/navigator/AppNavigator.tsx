@@ -11,6 +11,9 @@ import RegisterPage from '../page/Register';
 import WatchPage from '../page/Watchpage';
 import GoiVip from '../page/GoiVip';
 import Loading from '../page/Loading';
+import Home from '../page/Home';
+import TypeFilm from '../page/TypeFilm';
+import GenreFilm from '../page/GenrePage';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -28,6 +31,24 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
         <Stack.Screen
           name={SCREEN_NAME.LOGIN}
           component={LoginPage}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.TYPE_FILM}
+          component={TypeFilm}
+          options={{
+            headerShown: false,
+            title: 'Loại phim',
+            headerTintColor: ColorGeneral.primary,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.GENRE_FILM}
+          component={GenreFilm}
+          options={{
+            headerShown: false,
+            title: 'Thể loại phim',
+            headerTintColor: ColorGeneral.primary,
+          }}
         />
         <Stack.Screen
           name={SCREEN_NAME.DETAIL_FILM}
@@ -88,7 +109,7 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
           component={GoiVip}
           options={{
             headerShown: false,
-            title: 'Xem phim',
+            title: 'Goi Vip',
             headerTintColor: ColorGeneral.primary,
           }}
         />

@@ -38,6 +38,51 @@ type DetailFilmProps = NativeStackScreenProps<any, 'DetailFilm'>;
 const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [yeuThich, setYeuThich] = useState(false);
+  const [checkUserTermed, setUserTermed] = useState(false);
+
+
+  const checkYeuThich = async () => {
+    const response = await api.post('khach-hang/yeu-thich/kiem-tra', {
+      slug: movie?.slug_phim
+    });
+    console.log(response);
+    if (response.data.status === true) {
+      setYeuThich(true);
+      setUserTermed(response.data.isUserTermed === true)
+    }
+    else {
+      setYeuThich(false);
+    }
+  }
+  const themYeuThich = async () => {
+    try {
+      const response = await api.post('khach-hang/yeu-thich/thong-tin-tao', {
+        id_phim: movie?.id
+      });
+      console.log(response);
+      if (response.data.status === true) {
+        setYeuThich(true);
+        console.log('them yeu thich thanh cong');
+      }
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+    }
+
+  }
+  const xoaYeuThich = async () => {
+    try {
+      const response = await api.post('khach-hang/yeu-thich/thong-tin-xoa ', {
+        id_phim: movie?.id
+      });
+      if (response.data.status === true) {
+        console.log('xoa yeu thich thanh cong');
+        setYeuThich(false);
+      }
+    } catch (error) {
+      console.error('Error deleting favorite:', error);
+    }
+  }
   const getMovieDetail = async () => {
     try {
       const response = await api.post('phim/lay-data-delist', {
@@ -50,10 +95,16 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
       setLoading(false);
     }
   };
-  console.log(movie);
   useEffect(() => {
     getMovieDetail();
   }, [route.params?.phim]);
+
+  useEffect(() => {
+    checkYeuThich();
+  }, [movie]);
+
+
+  console.log(checkUserTermed);
 
   if (loading) {
     return (
@@ -111,12 +162,18 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
           </Button>
           <Button
             mode="outlined"
-            style={styles.favoriteButton}
-            icon="heart-outline"
+            style={yeuThich ? styles.favoriteButton_active : styles.favoriteButton}
+            icon={yeuThich ? 'heart' : 'heart-outline'}
             textColor="#FFF"
-            onPress={() => {/* TODO: Implement favorite functionality */ }}
+            onPress={() => {
+              if (yeuThich) {
+                xoaYeuThich();
+              } else {
+                themYeuThich();
+              }
+            }}
           >
-            Yêu thích
+            {yeuThich ? 'Đã thêm' : 'Yêu thích'}
           </Button>
         </View>
 
@@ -315,6 +372,11 @@ const styles = StyleSheet.create({
     color: '#FFF',
     flex: 1,
     fontSize: 14,
+  },
+  favoriteButton_active: {
+    flex: 1,
+    // borderColor: '#FFF',
+    backgroundColor: '#FF4500',
   },
 });
 

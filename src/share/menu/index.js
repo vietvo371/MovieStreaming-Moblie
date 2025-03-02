@@ -10,6 +10,8 @@ const SCREEN_NAME = {
     WATCH_PAGE         : 'WatchPage',
     GOIVIP             : 'GoiVip',
     LOADING            : 'Loading',
+    TYPE_FILM          : 'TypeFilm',
+    GENRE_FILM         : 'GenreFilm',
     
 }
 
