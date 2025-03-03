@@ -14,6 +14,11 @@ import Loading from '../page/Loading';
 import Home from '../page/Home';
 import TypeFilm from '../page/TypeFilm';
 import GenreFilm from '../page/GenrePage';
+import AllFilm from '../page/AllFilm';
+import PageProfile from '../page/PageProfile';
+import PageSetting from '../page/PageSetting';
+import BillingInfo from '../page/BillingInfo';
+import WatchHistory from '../page/WatchHistory';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -39,6 +44,43 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
             headerShown: false,
             title: 'Loại phim',
             headerTintColor: ColorGeneral.primary,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.BILLING_INFO}
+          component={BillingInfo}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.WATCH_HISTORY}
+          component={WatchHistory}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.ALL_FILM}
+          component={AllFilm}
+          options={{
+            headerShown: false,
+            title: 'Tất cả phim',
+            headerTintColor: ColorGeneral.primary,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.PAGE_PROFILE}
+          component={PageProfile}
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name={SCREEN_NAME.PAGE_SETTING}
+          component={PageSetting}
+          options={{
+            headerShown: false,
           }}
         />
         <Stack.Screen

@@ -126,7 +126,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-              onPress={() => {/* TODO: Navigate to all hot movies */ }}
+              onPress={() => navigation.navigate('AllFilm')}
             >
               Xem tất cả
             </Button>
@@ -145,7 +145,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-              onPress={() => {/* TODO: Navigate to all new movies */ }}
+              onPress={() => navigation.navigate('AllFilm')}
             >
               Xem tất cả
             </Button>
@@ -166,7 +166,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-              onPress={() => {/* TODO: Navigate to all hot movies */ }}
+                onPress={() => navigation.navigate('AllFilm')}
             >
               Xem tất cả
             </Button>
@@ -185,7 +185,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-              onPress={() => {/* TODO: Navigate to all hot movies */ }}
+                onPress={() => navigation.navigate('AllFilm')}
             >
               Xem tất cả
             </Button>

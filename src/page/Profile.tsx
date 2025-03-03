@@ -3,9 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  Image,
   ScrollView,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
+import { Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../utils/api';
 import { removeToken } from '../utils/TokenManager';
@@ -19,76 +22,125 @@ interface User {
   avatar: string;
   id_goi_vip: number;
 }
-const ProfilePage = ({ navigation }: { navigation: any }) => {
+
+export default function PageProfile({ navigation }: { navigation: any }) {
   const [user, setUser] = useState<User | null>(null);
 
   const handleLogout = () => {
     removeToken();
     navigation.navigate('Login');
   };
+
   const getUser = async () => {
-    api.get('/khach-hang/lay-du-lieu-profile').then((res) => {
+    try {
+      const res = await api.get('/khach-hang/lay-du-lieu-profile');
       if (res.data.status) {
         setUser(res.data.obj_user);
       } else {
         DisplayError(res);
       }
-    })
-    .catch((err) => {
+    } catch (err) {
       console.log(err);
-    });
+    }
   };
+
   useEffect(() => {
     getUser();
   }, []);
-  console.log(user);
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
+      {/* Header Profile */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tài khoản</Text>
+        <View style={styles.profileInfo}>
+          <Image
+            // source={user?.avatar ? { uri: user.avatar } : require('../assets/image/avatar-default.png')}
+            style={styles.avatar}
+          />
+          <View style={styles.userInfo}>
+            <Text style={styles.username}>{user?.ho_va_ten || 'Người dùng'}</Text>
+            <Text style={styles.userStatus}>
+              {user?.id_goi_vip ? 'Thành viên VIP' : 'Thành viên thường'}
+            </Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+          </View>
+        </View>
+        {!user?.id_goi_vip && (
+          <Button
+            mode="contained"
+            style={styles.upgradeButton}
+            labelStyle={styles.upgradeButtonText}
+            icon="crown"
+            onPress={() => navigation.navigate('GoiVip')}
+          >
+            Nâng cấp VIP ngay
+          </Button>
+        )}
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Profile Info */}
-        <View style={styles.profileInfo}>
-          <View style={styles.avatarContainer}>
-            <Icon name="account-circle" size={80} color="#FF4500" />
+   
+
+      {/* Menu Options */}
+      <View style={styles.menuContainer}>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('PageProfile')}
+        >
+          <View style={styles.menuIconContainer}>
+            <Icon name="account-outline" size={24} color="#FFF" />
           </View>
-          <Text style={styles.username}>{user?.ho_va_ten}</Text>
-          <TouchableOpacity style={styles.editButton}>
-            <Text style={styles.editButtonText}>Chỉnh sửa thông tin</Text>
-          </TouchableOpacity>
-        </View>
+          <Text style={styles.menuText}>Thông tin tài khoản</Text>
+          <Icon name="chevron-right" size={24} color="#666" />
+        </TouchableOpacity>
 
-        {/* Menu Items */}
-        <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem}>
-            <Icon name="account-settings" size={24} color="#FFF" />
-            <Text style={styles.menuText}>Cài đặt tài khoản</Text>
-            <Icon name="chevron-right" size={24} color="#666" />
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('BillingInfo')}
+        >
+          <View style={styles.menuIconContainer}>
+            <Icon name="aliwangwang" size={24} color="#FFF" />
+          </View>
+          <Text style={styles.menuText}>Thông tin hóa đơn</Text>
+          <Icon name="chevron-right" size={24} color="#666" />
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Icon name="bell-outline" size={24} color="#FFF" />
-            <Text style={styles.menuText}>Thông báo</Text>
-            <Icon name="chevron-right" size={24} color="#666" />
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('WatchHistory')}
+        >
+          <View style={styles.menuIconContainer}>
+            <Icon name="history" size={24} color="#FFF" />
+          </View>
+          <Text style={styles.menuText}>Lịch sử xem</Text>
+          <Icon name="chevron-right" size={24} color="#666" />
+        </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem}>
-            <Icon name="shield-check-outline" size={24} color="#FFF" />
-            <Text style={styles.menuText}>Quyền riêng tư</Text>
-            <Icon name="chevron-right" size={24} color="#666" />
-          </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('PageSetting')}
+        >
+          <View style={styles.menuIconContainer}>
+            <Icon name="cog-outline" size={24} color="#FFF" />
+          </View>
+          <Text style={styles.menuText}>Cài đặt</Text>
+          <Icon name="chevron-right" size={24} color="#666" />
+        </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleLogout} style={[styles.menuItem, styles.logoutButton]}>
+        <TouchableOpacity 
+          style={[styles.menuItem, styles.logoutItem]}
+          onPress={handleLogout}
+        >
+          <View style={styles.menuIconContainer}>
             <Icon name="logout" size={24} color="#FF4500" />
-            <Text style={[styles.menuText, styles.logoutText]}>Đăng xuất</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
+          </View>
+          <Text style={[styles.menuText, styles.logoutText]}>Đăng xuất</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
-};
+}
+
+const { width } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -96,63 +148,124 @@ const styles = StyleSheet.create({
     backgroundColor: '#0D0D0D',
   },
   header: {
-    padding: 16,
-    paddingTop: 24,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFF',
-  },
-  content: {
-    flex: 1,
+    padding: 20,
+    backgroundColor: '#161616',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   profileInfo: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-  },
-  avatarContainer: {
     marginBottom: 16,
+  },
+  avatar: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 3,
+    borderColor: '#FF4500',
+    backgroundColor: '#2A2A2A',
+  },
+  userInfo: {
+    marginLeft: 16,
+    flex: 1,
   },
   username: {
-    color: '#FFF',
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 16,
+    color: '#FFFFFF',
+    marginBottom: 4,
   },
-  editButton: {
-    backgroundColor: '#1E1E1E',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  editButtonText: {
+  userStatus: {
+    fontSize: 14,
     color: '#FF4500',
-    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
   },
-  menuSection: {
+  userEmail: {
+    fontSize: 13,
+    color: '#999',
+  },
+  upgradeButton: {
+    backgroundColor: '#FF4500',
+    borderRadius: 12,
+    marginTop: 8,
+    elevation: 4,
+  },
+  upgradeButtonText: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
     padding: 16,
+    backgroundColor: '#161616',
+    marginTop: 12,
+    borderRadius: 12,
+    marginHorizontal: 12,
+  },
+  statItem: {
+    alignItems: 'center',
+    width: width / 3 - 32,
+  },
+  statIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,69,0,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 13,
+    color: '#999',
+    textAlign: 'center',
+  },
+  menuContainer: {
+    marginTop: 12,
+    backgroundColor: '#161616',
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginHorizontal: 12,
+    marginBottom: 20,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E1E1E',
     padding: 16,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  menuIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   menuText: {
-    color: '#FFF',
-    fontSize: 16,
-    marginLeft: 16,
     flex: 1,
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
-  logoutButton: {
-    marginTop: 20,
+  logoutItem: {
+    borderBottomWidth: 0,
+    marginTop: 8,
   },
   logoutText: {
     color: '#FF4500',
+    fontWeight: '600',
   },
 });
-
-export default ProfilePage;
