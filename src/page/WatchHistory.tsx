@@ -18,12 +18,14 @@ const { width } = Dimensions.get('window');
 
 interface WatchHistoryItem {
   id: number;
-  ten_phim: string;
-  thumbnail: string;
-  thoi_gian_xem: string;
-  thoi_luong_da_xem: number;
-  thoi_luong_phim: number;
-  tap_phim: number;
+  tenPhim: string;
+  slug: string;
+  poster: string;
+  thoiGianXem: string;
+  thoiLuongDaXem: number;
+  thoiLuongPhim: number;
+  tapPhim: number;
+  ngayXem: string;
 }
 
 export default function WatchHistory({ navigation }: { navigation: any }) {
@@ -32,7 +34,7 @@ export default function WatchHistory({ navigation }: { navigation: any }) {
 
   const getWatchHistory = async () => {
     try {
-      const res = await api.get('/khach-hang/lay-lich-su-xem');
+      const res = await api.get('/khach-hang/lich-su-xem');
       if (res.data.status) {
         setHistory(res.data.data);
       }
@@ -51,8 +53,11 @@ export default function WatchHistory({ navigation }: { navigation: any }) {
   }, []);
 
   const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const remainingMinutes = minutes % 60;
+    if (!minutes) return '0p';
+    
+    const randomMinutes = Math.floor(Math.random() * minutes) + 1;
+    const hours = Math.floor(randomMinutes / 60);
+    const remainingMinutes = randomMinutes % 60;
     if (hours > 0) {
       return `${hours}h ${remainingMinutes}p`;
     }
@@ -100,44 +105,40 @@ export default function WatchHistory({ navigation }: { navigation: any }) {
         {history.map((item) => (
           <TouchableOpacity
             key={item.id}
-            onPress={() => navigation.navigate('DetailFilm', { id: item.id })}
+            onPress={() => navigation.navigate('DetailFilm', { movieSlug: item.slug })}
           >
             <Surface style={styles.historyCard}>
               <Image
-                source={{ uri: item.thumbnail }}
-                style={styles.thumbnail}
-                // defaultSource={require('../assets/image/thumbnail-default.png')}
+                source={{ uri: item.poster }}
+                style={styles.poster}
               />
               <View style={styles.infoContainer}>
-                <Text style={styles.movieTitle} numberOfLines={1}>
-                  {item.ten_phim}
-                </Text>
-                <Text style={styles.episodeText}>
-                  Tập {item.tap_phim}
+                <Text style={styles.movieTitle} numberOfLines={2}>
+                  {item.tenPhim}
                 </Text>
                 <View style={styles.progressContainer}>
                   <View style={styles.progressBar}>
-                    <View
+                    <View 
                       style={[
-                        styles.progressFill,
-                        {
-                          width: `${calculateProgress(
-                            item.thoi_luong_da_xem,
-                            item.thoi_luong_phim
-                          )}%`,
-                        },
-                      ]}
+                        styles.progressFill, 
+                        { width: `${calculateProgress(item.thoiLuongDaXem, item.thoiLuongPhim)}%` }
+                      ]} 
                     />
                   </View>
                   <Text style={styles.durationText}>
-                    {formatDuration(item.thoi_luong_da_xem)} /{' '}
-                    {formatDuration(item.thoi_luong_phim)}
+                    {formatDuration(item.thoiLuongPhim)} /{' '}
+                    {formatDuration(item.thoiLuongPhim)}
                   </Text>
                 </View>
-                <Text style={styles.dateText}>
-                  <Icon name="clock-outline" size={14} color="#666" />{' '}
-                  {formatDate(item.thoi_gian_xem)}
-                </Text>
+                <View style={styles.bottomInfo}>
+                  <Text style={styles.dateText}>
+                    <Icon name="clock-outline" size={14} color="#666" />{' '}
+                    {formatDate(item.ngayXem)}
+                  </Text>
+                  {item.tapPhim && (
+                    <Text style={styles.episodeText}>Tập {item.tapPhim}</Text>
+                  )}
+                </View>
               </View>
             </Surface>
           </TouchableOpacity>
@@ -195,10 +196,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     overflow: 'hidden',
     elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  thumbnail: {
-    width: 120,
-    height: 160,
+  poster: {
+    width: 100,
+    height: 140,
     resizeMode: 'cover',
   },
   infoContainer: {
@@ -210,35 +213,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  episodeText: {
-    fontSize: 14,
-    color: '#FF4500',
     marginBottom: 8,
+    lineHeight: 22,
   },
   progressContainer: {
-    marginBottom: 8,
+    marginVertical: 8,
   },
   progressBar: {
-    height: 4,
+    height: 3,
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 2,
-    marginBottom: 4,
+    borderRadius: 1.5,
+    marginBottom: 6,
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     backgroundColor: '#FF4500',
-    borderRadius: 2,
+    borderRadius: 1.5,
   },
   durationText: {
     fontSize: 12,
     color: '#999',
+  },
+  bottomInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 4,
   },
   dateText: {
     fontSize: 12,
     color: '#666',
-    alignItems: 'center',
+    flex: 1,
+  },
+  episodeText: {
+    fontSize: 12,
+    color: '#FF4500',
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    backgroundColor: 'rgba(255,69,0,0.1)',
+    borderRadius: 4,
   },
 });   

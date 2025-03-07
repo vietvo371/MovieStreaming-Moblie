@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -11,63 +11,146 @@ import {
 import { TextInput, Button, Surface } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../utils/api';
-import { DisplayError } from '../../general/Notification';
+// import { DisplayError } from '../../general/Notification';
 
+interface User {
+  id: number;
+  ho_va_ten: string;
+  so_dien_thoai: string;
+  avatar: string;
+  email: string;
+}
 const { width } = Dimensions.get('window');
 
 export default function PageProfile({ navigation }: { navigation: any }) {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [old_pass, setold_pass] = useState('');
+  const [new_pass, setnew_pass] = useState('');
+  const [re_new_pass, setre_new_pass] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('info'); // 'info' or 'password'
+  const [user, setUser] = useState<User>({
+    id: 0,
+    ho_va_ten: '',
+    so_dien_thoai: '',
+    avatar: '',
+    email: '',
+  });
+  const [errors, setErrors] = useState({
+    ho_va_ten: '',
+    so_dien_thoai: '',
+    old_pass: '',
+    new_pass: '',
+    re_new_pass: '',
+  });
 
-  const handleUpdateInfo = async () => {
-    if (!fullName || !phone) {
-      Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
-      return;
-    }
+  const getUser = async () => {
     try {
-      const res = await api.post('/khach-hang/cap-nhat-thong-tin', {
-        ho_va_ten: fullName,
-        so_dien_thoai: phone,
-      });
+      const res = await api.get('/khach-hang/lay-du-lieu-profile');
       if (res.data.status) {
-        navigation.goBack();
+        setUser(res.data.obj_user);
       } else {
-        DisplayError(res);
+        // DisplayError(res);
+        console.log(res);
       }
     } catch (err) {
       console.log(err);
-      Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi cập nhật thông tin');
     }
   };
 
-  const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Lỗi', 'Mật khẩu mới không khớp');
-      return;
-    }
+  useEffect(() => {
+    getUser();
+  }, []);
 
+  useEffect(() => {
+    if (user?.ho_va_ten && !fullName) {
+      setFullName(user.ho_va_ten);
+    }
+    if (user?.so_dien_thoai && !phone) {
+      setPhone(user.so_dien_thoai);
+    }
+  }, [user]);
+
+  const handleUpdateInfo = async () => {
     try {
-      const res = await api.post('/khach-hang/doi-mat-khau', {
-        mat_khau_cu: currentPassword,
-        mat_khau_moi: newPassword,
-      });
+      const res = await api.put('/khach-hang/doi-thong-tin',
+        {
+          id: user.id,
+          ho_va_ten: fullName,
+          so_dien_thoai: phone,
+          avatar: user.avatar,
+        }
+      );
       if (res.data.status) {
         navigation.goBack();
       } else {
-        DisplayError(res);
+        console.log(res)
       }
-    } catch (err) {
-      console.log(err);
-      Alert.alert('Lỗi', 'Đã có lỗi xảy ra khi đổi mật khẩu');
+    } catch (error: any) {
+      console.log(error.response.data.errors);
+      setErrors(error.response.data.errors);
+    }
+  };
+  console.log(errors);
+
+  const validatePassword = () => {
+    let isValid = true;
+    const newErrors = {
+      ...errors,
+      old_pass: '',
+      new_pass: '',
+      re_new_pass: '',
+    };
+
+    if (!old_pass) {
+      newErrors.old_pass = 'Vui lòng nhập mật khẩu hiện tại';
+      isValid = false;
+    }
+
+    if (!new_pass) {
+      newErrors.new_pass = 'Vui lòng nhập mật khẩu mới';
+      isValid = false;
+    } else if (new_pass.length < 6) {
+      newErrors.new_pass = 'Mật khẩu mới phải có ít nhất 6 ký tự';
+      isValid = false;
+    } else if (old_pass === new_pass) {
+      newErrors.new_pass =
+        'Mật khẩu mới không được trùng với mật khẩu hiện tại';
+      isValid = false;
+    }
+
+    if (!re_new_pass) {
+      newErrors.re_new_pass = 'Vui lòng xác nhận mật khẩu mới';
+      isValid = false;
+    } else if (new_pass !== re_new_pass) {
+      newErrors.re_new_pass = 'Mật khẩu xác nhận không khớp';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleChangePassword = async () => {
+
+    try {
+      const payload = {
+        id: user.id,
+        re_new_pass: re_new_pass,
+        old_pass: old_pass,
+        new_pass: new_pass,
+        email: user.email,  
+      }
+      console.log(payload);
+      const res = await api.put('/khach-hang/doi-mat-khau', payload);
+      if (res.data.status) {
+        navigation.goBack();
+      } else {
+        console.log(res);
+      }
+    } catch (err: any) {
+      setErrors(err.response.data.errors);
     }
   };
 
@@ -77,41 +160,48 @@ export default function PageProfile({ navigation }: { navigation: any }) {
         <View style={styles.headerTop}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+            onPress={() => navigation.goBack()}>
             <Icon name="arrow-left" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
             <Text style={styles.headerTitle}>Thông tin tài khoản</Text>
-            <Text style={styles.headerSubtitle}>Cập nhật thông tin cá nhân của bạn</Text>
+            <Text style={styles.headerSubtitle}>
+              Cập nhật thông tin cá nhân của bạn
+            </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'info' && styles.activeTab]}
-          onPress={() => setActiveTab('info')}
-        >
-          <Icon 
-            name="account-edit" 
-            size={24} 
-            color={activeTab === 'info' ? '#FF4500' : '#666'} 
+          onPress={() => setActiveTab('info')}>
+          <Icon
+            name="account-edit"
+            size={24}
+            color={activeTab === 'info' ? '#FF4500' : '#666'}
           />
-          <Text style={[styles.tabText, activeTab === 'info' && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'info' && styles.activeTabText,
+            ]}>
             Thông tin
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'password' && styles.activeTab]}
-          onPress={() => setActiveTab('password')}
-        >
-          <Icon 
-            name="lock" 
-            size={24} 
-            color={activeTab === 'password' ? '#FF4500' : '#666'} 
+          onPress={() => setActiveTab('password')}>
+          <Icon
+            name="lock"
+            size={24}
+            color={activeTab === 'password' ? '#FF4500' : '#666'}
           />
-          <Text style={[styles.tabText, activeTab === 'password' && styles.activeTabText]}>
+          <Text
+            style={[
+              styles.tabText,
+              activeTab === 'password' && styles.activeTabText,
+            ]}>
             Mật khẩu
           </Text>
         </TouchableOpacity>
@@ -123,29 +213,52 @@ export default function PageProfile({ navigation }: { navigation: any }) {
             <Text style={styles.sectionTitle}>Cập nhật thông tin cá nhân</Text>
             <TextInput
               mode="outlined"
+              // error={errors.fullName}
               label="Họ và tên"
               value={fullName}
               onChangeText={setFullName}
               style={styles.input}
-              theme={{ colors: { primary: '#FF4500' } }}
-              left={<TextInput.Icon icon="account" />}
+              theme={{
+                colors: {
+                  primary: '#FF4500',
+
+                  text: '#FFFFFF',
+                  placeholder: '#9E9E9E',
+                },
+              }}
+              textColor="#FFFFFF"
+              placeholderTextColor="#9E9E9E"
+              left={<TextInput.Icon icon="account" color="#FFFFFF" />}
             />
+            {errors.ho_va_ten ? (
+              <Text style={styles.errorText}>{errors.ho_va_ten}</Text>
+            ) : null}
             <TextInput
               mode="outlined"
+              // error={errors.phone}
               label="Số điện thoại"
               value={phone}
               onChangeText={setPhone}
-              keyboardType="phone-pad"
               style={styles.input}
-              theme={{ colors: { primary: '#FF4500' } }}
-              left={<TextInput.Icon icon="phone" />}
+              theme={{
+                colors: {
+                  primary: '#FF4500',
+                  text: '#FFFFFF',
+                  placeholder: '#9E9E9E',
+                },
+              }}
+              textColor="#FFFFFF"
+              placeholderTextColor="#9E9E9E"
+              left={<TextInput.Icon icon="phone" color="#FFFFFF" />}
             />
+            {errors.so_dien_thoai ? (
+              <Text style={styles.errorText}>{errors.so_dien_thoai}</Text>
+            ) : null}
             <Button
               mode="contained"
               onPress={handleUpdateInfo}
               style={styles.button}
-              labelStyle={styles.buttonText}
-            >
+              labelStyle={styles.buttonText}>
               Cập nhật thông tin
             </Button>
           </View>
@@ -155,45 +268,87 @@ export default function PageProfile({ navigation }: { navigation: any }) {
             <TextInput
               mode="outlined"
               label="Mật khẩu hiện tại"
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
+              value={old_pass}
+              onChangeText={text => {
+                setold_pass(text);
+                setErrors({ ...errors, old_pass: '' });
+              }}
               secureTextEntry={!showPassword}
               style={styles.input}
-              theme={{ colors: { primary: '#FF4500' } }}
-              left={<TextInput.Icon icon="lock" />}
+              theme={{
+                colors: {
+                  primary: '#FF4500',
+                  text: '#FFFFFF',
+                  placeholder: '#9E9E9E',
+                },
+              }}
+              textColor="#FFFFFF"
+              placeholderTextColor="#9E9E9E"
+              left={<TextInput.Icon icon="lock" color="#FFFFFF" />}
               right={
                 <TextInput.Icon
                   icon={showPassword ? 'eye-off' : 'eye'}
                   onPress={() => setShowPassword(!showPassword)}
+                  color="#FFFFFF"
                 />
               }
             />
+            {errors.old_pass ? (
+              <Text style={styles.errorText}>{errors.old_pass}</Text>
+            ) : null}
             <TextInput
               mode="outlined"
               label="Mật khẩu mới"
-              value={newPassword}
-              onChangeText={setNewPassword}
+              value={new_pass}
+              onChangeText={text => {
+                setnew_pass(text);
+                setErrors({ ...errors, new_pass: '' });
+              }}
               secureTextEntry={!showPassword}
               style={styles.input}
-              theme={{ colors: { primary: '#FF4500' } }}
-              left={<TextInput.Icon icon="lock-plus" />}
+              theme={{
+                colors: {
+                  primary: '#FF4500',
+                  text: '#FFFFFF',
+                  placeholder: '#9E9E9E',
+                },
+              }}
+              textColor="#FFFFFF"
+              placeholderTextColor="#9E9E9E"
+              left={<TextInput.Icon icon="lock-plus" color="#FFFFFF" />}
             />
+            {errors.new_pass ? (
+              <Text style={styles.errorText}>{errors.new_pass}</Text>
+            ) : null}
             <TextInput
               mode="outlined"
               label="Xác nhận mật khẩu mới"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              value={re_new_pass}
+              onChangeText={text => {
+                setre_new_pass(text);
+                setErrors({ ...errors, re_new_pass: '' });
+              }}
               secureTextEntry={!showPassword}
               style={styles.input}
-              theme={{ colors: { primary: '#FF4500' } }}
-              left={<TextInput.Icon icon="lock-check" />}
+              theme={{
+                colors: {
+                  primary: '#FF4500',
+                  text: '#FFFFFF',
+                  placeholder: '#9E9E9E',
+                },
+              }}
+              textColor="#FFFFFF"
+              placeholderTextColor="#9E9E9E"
+              left={<TextInput.Icon icon="lock-check" color="#FFFFFF" />}
             />
+            {errors.re_new_pass ? (
+              <Text style={styles.errorText}>{errors.re_new_pass}</Text>
+            ) : null}
             <Button
               mode="contained"
               onPress={handleChangePassword}
               style={styles.button}
-              labelStyle={styles.buttonText}
-            >
+              labelStyle={styles.buttonText}>
               Đổi mật khẩu
             </Button>
           </View>
@@ -296,4 +451,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-}); 
+  errorText: {
+    color: '#FF0000',
+    fontSize: 12,
+    marginTop: -8,
+    marginBottom: 8,
+    marginLeft: 12,
+  },
+});

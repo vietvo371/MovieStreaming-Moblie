@@ -1,9 +1,9 @@
 import axios from "axios";
 import { getToken, saveToken } from "./TokenManager";
-import { DisplayError } from "../../general/Notification";
 import Toast from "react-native-toast-message";
 
 const baseUrl = 'http://192.168.20.20:8000/api';
+// const baseUrl = 'http://192.168.1.131:8000/api';
 const api = axios.create({
     baseURL: baseUrl,
     headers: {
@@ -27,31 +27,64 @@ api.interceptors.response.use(
         }
         return response;
     },
-    (error) => {
-        if (error.response) {
-            if (error.response.data && error.response.data.errors) {
-                DisplayError(error.response.data.errors.message);
-            } else if (error.response.data && error.response.data.message) {
-                DisplayError(error.response.data.message);
-            } else {
-                Toast.show({
-                    text1: 'Có lỗi xảy ra, vui lòng thử lại sau',
-                    type: 'error',
-                });
-            }
-        } else if (error.request) {
-            Toast.show({
-                text1: 'Không thể kết nối đến máy chủ',
-                type: 'error',
-            });
-        } else {
-            Toast.show({
-                text1: 'Có lỗi xảy ra, vui lòng thử lại sau',
-                type: 'error',
-            });
-        }
-        return Promise.reject(error);
-    }
+    // (error) => {
+    //     if (error.response) {
+    //         console.log(error.response);
+    //         switch (error.response.status) {
+    //             case 401:
+    //                 Toast.show({
+    //                     type: 'error',
+    //                     text1: 'Phiên đăng nhập hết hạn',
+    //                     text2: 'Vui lòng đăng nhập lại'
+    //                 });
+    //                 break;
+    //             case 402:
+    //                 Toast.show({
+    //                     type: 'error',
+    //                     text1: 'Yêu cầu nâng cấp',
+    //                     text2: 'Vui lòng nâng cấp tài khoản'
+    //                 });
+    //                 break;
+    //             case 403:
+    //                 Toast.show({
+    //                     type: 'error',
+    //                     text1: 'Không có quyền truy cập',
+    //                     text2: error.response.data.message
+    //                 });
+    //                 break;
+    //             case 422:
+    //                 const errors = error.response.data.errors;
+    //                 if (errors) {
+    //                     const firstError = Object.values(errors)[0];
+    //                     Toast.show({
+    //                         type: 'error',
+    //                         text1: 'Lỗi dữ liệu',
+    //                         text2: Array.isArray(firstError) ? firstError[0] : firstError
+    //                     });
+    //                 }
+    //                 break;
+    //             default:
+    //                 Toast.show({
+    //                     type: 'error',
+    //                     text1: 'Lỗi',
+    //                     text2: error.response.data.message || 'Có lỗi xảy ra, vui lòng thử lại'
+    //                 });
+    //         }
+    //     } else if (error.request) {
+    //         Toast.show({
+    //             type: 'error',
+    //             text1: 'Lỗi kết nối',
+    //             text2: 'Không thể kết nối đến máy chủ'
+    //         });
+    //     } else {
+    //         Toast.show({
+    //             type: 'error',
+    //             text1: 'Lỗi',
+    //             text2: 'Có lỗi xảy ra, vui lòng thử lại'
+    //         });
+    //     }
+    //     return Promise.reject(error);
+    // }
 );
 
 export default api;

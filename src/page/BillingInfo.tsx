@@ -16,9 +16,9 @@ interface Bill {
   ma_hoa_don: string;
   ten_goi: string;
   tong_tien: number;
-  trang_thai: string;
-  ngay_tao: string;
-  ngay_het_han: string;
+  tinh_trang: number;
+  ngay_bat_dau: string;
+  ngay_ket_thuc: string;
 }
 
 export default function BillingInfo({ navigation }: { navigation: any }) {
@@ -27,7 +27,7 @@ export default function BillingInfo({ navigation }: { navigation: any }) {
 
   const getBills = async () => {
     try {
-      const res = await api.get('/khach-hang/lay-danh-sach-hoa-don');
+      const res = await api.get('/get-data-transaction-open');
       if (res.data.status) {
         setBills(res.data.data);
       }
@@ -54,13 +54,13 @@ export default function BillingInfo({ navigation }: { navigation: any }) {
     return amount.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'đã thanh toán':
+  const getStatusColor = (status: number) => {
+    switch (status) {
+      case 1:
         return '#4CAF50';
-      case 'chưa thanh toán':
+      case 2:
         return '#FF9800';
-      case 'hết hạn':
+      case 3:
         return '#F44336';
       default:
         return '#666666';
@@ -100,16 +100,16 @@ export default function BillingInfo({ navigation }: { navigation: any }) {
               <View
                 style={[
                   styles.statusBadge,
-                  { backgroundColor: getStatusColor(bill.trang_thai) + '20' },
+                  { backgroundColor: '#FF4500' + '20' },
                 ]}
               >
                 <Text
                   style={[
                     styles.statusText,
-                    { color: getStatusColor(bill.trang_thai) },
+                    {  color: getStatusColor(bill.tinh_trang) },
                   ]}
                 >
-                  {bill.trang_thai}
+                  {bill.tinh_trang === 1 ? 'Đã thanh toán' : bill.tinh_trang === 2 ? 'Chưa thanh toán' : 'Hết hạn'}
                 </Text>
               </View>
             </View>
@@ -127,14 +127,14 @@ export default function BillingInfo({ navigation }: { navigation: any }) {
                 <View style={styles.dateContainer}>
                   <Icon name="calendar-start" size={16} color="#666" />
                   <Text style={styles.dateText}>
-                    {formatDate(bill.ngay_tao)}
+                    {formatDate(bill.ngay_bat_dau)}
                   </Text>
                 </View>
                 <Icon name="arrow-right" size={16} color="#666" />
                 <View style={styles.dateContainer}>
                   <Icon name="calendar-end" size={16} color="#666" />
                   <Text style={styles.dateText}>
-                    {formatDate(bill.ngay_het_han)}
+                    {formatDate(bill.ngay_ket_thuc)}
                   </Text>
                 </View>
               </View>

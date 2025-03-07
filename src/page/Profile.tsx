@@ -56,6 +56,7 @@ export default function PageProfile({ navigation }: { navigation: any }) {
           <Image
             // source={user?.avatar ? { uri: user.avatar } : require('../assets/image/avatar-default.png')}
             style={styles.avatar}
+            source={{ uri: user?.avatar }}
           />
           <View style={styles.userInfo}>
             <Text style={styles.username}>{user?.ho_va_ten || 'Người dùng'}</Text>
@@ -98,7 +99,7 @@ export default function PageProfile({ navigation }: { navigation: any }) {
           onPress={() => navigation.navigate('BillingInfo')}
         >
           <View style={styles.menuIconContainer}>
-            <Icon name="aliwangwang" size={24} color="#FFF" />
+            <Icon name="credit-card-outline" size={24} color="#FFF" />
           </View>
           <Text style={styles.menuText}>Thông tin hóa đơn</Text>
           <Icon name="chevron-right" size={24} color="#666" />
@@ -115,7 +116,7 @@ export default function PageProfile({ navigation }: { navigation: any }) {
           <Icon name="chevron-right" size={24} color="#666" />
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        {/* <TouchableOpacity 
           style={styles.menuItem}
           onPress={() => navigation.navigate('PageSetting')}
         >
@@ -124,7 +125,7 @@ export default function PageProfile({ navigation }: { navigation: any }) {
           </View>
           <Text style={styles.menuText}>Cài đặt</Text>
           <Icon name="chevron-right" size={24} color="#666" />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <TouchableOpacity 
           style={[styles.menuItem, styles.logoutItem]}
