@@ -39,8 +39,9 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
   const [movie, setMovie] = useState<MovieDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [yeuThich, setYeuThich] = useState(false);
-  const [checkUserTermed, setUserTermed] = useState(false);
-
+  const [checkYeuThichLoading, setCheckYeuThichLoading] = useState(false);
+  const [isUserTermed, setIsUserTermed] = useState(false);
+  const [episodeSlug, setEpisodeSlug] = useState('');
 
   const checkYeuThich = async () => {
     const response = await api.post('khach-hang/yeu-thich/kiem-tra', {
@@ -49,7 +50,7 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
     console.log(response);
     if (response.data.status === true) {
       setYeuThich(true);
-      setUserTermed(response.data.isUserTermed === true)
+      setCheckYeuThichLoading(response.data.isUserTermed === true)
     }
     else {
       setYeuThich(false);
@@ -88,8 +89,11 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
       const response = await api.post('phim/lay-data-delist', {
         slug: route.params?.movieSlug
       });
+      console.log(response.data);
       setMovie(response.data.phim);
+      setIsUserTermed(response.data.isUserTermed);
       setLoading(false);
+      setEpisodeSlug(response.data.tap.slug_tap_phim);
     } catch (error) {
       console.error('Error fetching movie details:', error);
       setLoading(false);
@@ -104,7 +108,7 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
   }, [movie]);
 
 
-  console.log(checkUserTermed);
+  console.log(checkYeuThichLoading);
 
   if (loading) {
     return (
@@ -152,11 +156,19 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
 
         {/* Action Buttons */}
         <View style={styles.actions}>
-          <Button
+          
+          <Button 
             mode="contained"
             style={styles.playButton}
             icon="play"
-            onPress={() => navigation.navigate(SCREEN_NAME.WATCH_PAGE, { movieSlug: route.params?.movieSlug })}
+            onPress={() =>{
+              if(isUserTermed){
+                navigation.navigate(SCREEN_NAME.WATCH_PAGE, { movieSlug: route.params?.movieSlug, episodeSlug: episodeSlug })
+              }
+              else{
+                navigation.navigate(SCREEN_NAME.LOGIN)
+              }
+            } }
           >
             Xem phim
           </Button>

@@ -7,37 +7,44 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import WebView from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import api from '../utils/api';
 
 interface Movie {
     id: number;
     slug_phim: string;
-    name: string;
+    ten_phim: string;
     hinh_anh: string;
-    year: string;
-    description: string;
+    nam_san_xuat: string;
+    mo_ta: string;
     episodes: Episode[];
+    thoi_gian_chieu: number;
+    quoc_gia: string;
+    ngon_ngu: string;
+    chat_luong: string;
+    tong_luot_xem: number;
 }
 
 interface Episode {
-    server_name: string;
-    server_data: ServerData[];
+    so_tap: string;
+    slug_tap_phim: string;
+    url: string;
+    link_m3u8: string;
 }
 
 interface ServerData {
-    name: string;
-    slug: string;
-    link_embed: string;
+    so_tap: string;
+    slug_tap_phim: string;
+    url: string;
     link_m3u8: string;
 }
 
 type RootStackParamList = {
     DetailFilm: { movieSlug: string };
-    WatchPage: { movieSlug: string };
+    WatchPage: { movieSlug: string, episodeSlug: string };
 };
 
 type WatchPageRouteProp = RouteProp<RootStackParamList, 'WatchPage'>;
 
-const API_URL = 'https://ophim1.com/phim/';
 
 const WatchPage = () => {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -50,35 +57,31 @@ const WatchPage = () => {
     const [selectedServer, setSelectedServer] = useState<string>('');
     const insets = useSafeAreaInsets();
 
+    const getMovieDetail = async () => {
+        try {
+            const response = await api.post('lay-data-watch', {
+                "slugMovie": route.params?.movieSlug,
+                "slugEpisode": route.params?.episodeSlug
+            });
+            console.log(response.data);
+            setMovie(response.data.phim);
+            setEpisodes(response.data.tap_phims);
+            setSelectedEpisode(response.data.tap_phims[0]);
+            setLoading(false);
+        } catch (error: any) {
+            console.error(error.response);
+            setLoading(false);
+        }
+    }
+
     useEffect(() => {
         if (!route.params?.movieSlug) {
             setError('Không tìm thấy thông tin phim');
             setLoading(false);
             return;
         }
-
-        fetch(`${API_URL}${route.params.movieSlug}`)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                if (!data.movie) {
-                    setError('Không tìm thấy thông tin phim');
-                    return;
-                }
-                setMovie(data.movie);
-                if (data.episodes) {
-                    setEpisodes(data.episodes);
-                    setSelectedServer(data.episodes[0].server_name);
-                    setSelectedEpisode(data.episodes[0].server_data[0]);
-                }
-                setLoading(false);
-            })
-            .catch(error => {
-                setError('Lỗi khi tải phim');
-                setLoading(false);
-            });
+        getMovieDetail();
     }, [route.params?.movieSlug]);
-    console.log(selectedEpisode);
     if (loading) {
         return (
             <View style={styles.container}>
@@ -95,9 +98,7 @@ const WatchPage = () => {
         );
     }
     const renderVideoPlayer = () => {
-        if (!selectedEpisode?.link_embed) return null;
-        // console.log(selectedEpisode.link_embed);
-
+        if (!selectedEpisode?.url) return null;
         const htmlContent = `
             <!DOCTYPE html>
             <html>
@@ -130,7 +131,7 @@ const WatchPage = () => {
                 <body>
                     <div class="video-container">
                         <iframe
-                            src="${selectedEpisode.link_embed}"
+                            src="${selectedEpisode.url}"
                             frameborder="0"
                             allow="autoplay; fullscreen"
                             allowfullscreen
@@ -171,7 +172,7 @@ const WatchPage = () => {
                 >
                     <Icon name="chevron-left" size={28} color="#fff" />
                 </TouchableOpacity>
-                <Text numberOfLines={1} style={styles.title}>{movie?.name}</Text>
+                <Text numberOfLines={1} style={styles.title}>{movie?.ten_phim}</Text>
                 <TouchableOpacity style={styles.menuButton}>
                     <Icon name="dots-vertical" size={24} color="#fff" />
                 </TouchableOpacity>
@@ -188,64 +189,37 @@ const WatchPage = () => {
 
             <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                 <View style={styles.movieInfoBrief}>
-                    <Text style={styles.movieTitle}>{movie?.name}</Text>
+                    <Text style={styles.movieTitle}>{movie?.ten_phim}</Text>
                     <View style={styles.movieMeta}>
                         <View style={styles.yearBadge}>
-                            <Text style={styles.yearText}>{movie?.year}</Text>
+                            <Text style={styles.yearText}>{movie?.nam_san_xuat}</Text>
                         </View>
                         <Text style={styles.dotSeparator}>•</Text>
                         <Text style={styles.episodeCount}>
-                            {episodes.find(server => server.server_name === selectedServer)?.server_data.length || 0} tập
+                            {episodes.length || 1} tập
                         </Text>
                     </View>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Chọn Server</Text>
-                    <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false} 
-                        style={styles.serverList}
-                    >
-                        {episodes.map((server) => (
-                            <TouchableOpacity
-                                key={server.server_name}
-                                style={[
-                                    styles.serverButton,
-                                    selectedServer === server.server_name && styles.selectedServer
-                                ]}
-                                onPress={() => setSelectedServer(server.server_name)}
-                            >
-                                <Text style={[
-                                    styles.serverText,
-                                    selectedServer === server.server_name && styles.selectedServerText
-                                ]}>
-                                    {server.server_name}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Tập Phim</Text>
                     <View style={styles.episodeGrid}>
                         {episodes
-                            .find(server => server.server_name === selectedServer)
-                            ?.server_data.map((episode) => (
+                            .map((episode) => (
                                 <TouchableOpacity
-                                    key={episode.slug}
+                                    key={episode.slug_tap_phim}
                                     style={[
                                         styles.episodeButton,
-                                        selectedEpisode?.slug === episode.slug && styles.selectedEpisode
+                                        selectedEpisode?.slug_tap_phim === episode.slug_tap_phim && styles.selectedEpisode
                                     ]}
                                     onPress={() => setSelectedEpisode(episode)}
                                 >
                                     <Text style={[
                                         styles.episodeText,
-                                        selectedEpisode?.slug === episode.slug && styles.selectedEpisodeText
+                                        selectedEpisode?.slug_tap_phim === episode.slug_tap_phim && styles.selectedEpisodeText
                                     ]}>
-                                        {episode.name}
+                                        Tập {episode.so_tap}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
@@ -254,7 +228,7 @@ const WatchPage = () => {
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Nội Dung Phim</Text>
-                    <Text style={styles.description}>{movie?.description}</Text>
+                    <Text style={styles.description}>{movie?.mo_ta}</Text>
                 </View>
             </ScrollView>
         </View>
@@ -351,8 +325,8 @@ const styles = StyleSheet.create({
         borderColor: '#333',
     },
     selectedServer: {
-        backgroundColor: '#0a84ff',
-        borderColor: '#0a84ff',
+        backgroundColor: '#FF4500',
+        borderColor: '#FF4500',
     },
     serverText: {
         color: '#fff',
@@ -378,8 +352,8 @@ const styles = StyleSheet.create({
         borderColor: '#333',
     },
     selectedEpisode: {
-        backgroundColor: '#0a84ff',
-        borderColor: '#0a84ff',
+        backgroundColor: '#FF4500',
+        borderColor: '#FF4500',
     },
     episodeText: {
         color: '#fff',
