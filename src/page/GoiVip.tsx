@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
-import { useNavigation } from '@react-navigation/native';
+import { NavigationProp } from '@react-navigation/native';
+import SCREEN_NAME from '../share/menu';
 
 interface VIPPackage {
   id: number;
@@ -23,8 +24,7 @@ interface VIPPackage {
   tinh_trang: number;
 }
 
-const GoiVip = () => {
-  const navigation = useNavigation();
+const GoiVip = ({ navigation }: { navigation: NavigationProp<any> }) => {
   const [packages, setPackages] = useState<VIPPackage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,8 +54,8 @@ const GoiVip = () => {
     return Math.round(((original - sale) / original) * 100);
   };
 
-  const handlePurchase = (packageId: number) => {
-    console.log('Mua gói VIP:', packageId);
+  const handlePurchase = (pkg: VIPPackage) => {
+    navigation.navigate(SCREEN_NAME.PAYMENT_METHOD, { packageInfo: pkg });
   };
 
   const renderPackage = (pkg: VIPPackage) => (
@@ -82,22 +82,22 @@ const GoiVip = () => {
 
         <View style={styles.featuresContainer}>
           <View style={styles.featureRow}>
-            <Icon name="movie" size={24} color="#FFD700" />
+            <Icon name="movie" size={24} color="#FF4500" />
             <Text style={styles.featureText}>Xem phim chất lượng 4K</Text>
           </View>
           <View style={styles.featureRow}>
-            <Icon name="devices" size={24} color="#FFD700" />
+            <Icon name="devices" size={24} color="#FF4500" />
             <Text style={styles.featureText}>Xem trên nhiều thiết bị</Text>
           </View>
           <View style={styles.featureRow}>
-            <Icon name="block" size={24} color="#FFD700" />
+            <Icon name="block" size={24} color="#FF4500" />
             <Text style={styles.featureText}>Không quảng cáo</Text>
           </View>
         </View>
 
         <TouchableOpacity
           style={styles.purchaseButton}
-          onPress={() => handlePurchase(pkg.id)}
+          onPress={() => handlePurchase(pkg)}
         >
           <Text style={styles.buttonText}>NÂNG CẤP NGAY</Text>
         </TouchableOpacity>
@@ -108,7 +108,7 @@ const GoiVip = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FFD700" />
+        <ActivityIndicator size="large" color="#FF4500" />
       </View>
     );
   }
@@ -122,7 +122,7 @@ const GoiVip = () => {
       <View style={styles.overlay}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
@@ -238,13 +238,14 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   discountBadge: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF4500',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   discountText: {
-    color: '#000000',
+    color: '#FFFFFF',
+
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
   salePrice: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFD700',
+    color: '#FFFFFF',
   },
   divider: {
     height: 1,
@@ -283,13 +284,13 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   purchaseButton: {
-    backgroundColor: '#FFD700',
+    backgroundColor: '#FF4500',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
     letterSpacing: 1,

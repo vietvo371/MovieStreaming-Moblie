@@ -10,10 +10,9 @@ import {
 } from 'react-native';
 import { Card, Button } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
-import DetailFilm from './DetailFilm';
 import LinearGradient from 'react-native-linear-gradient';
 import api from '../utils/api';
-
+import SCREEN_NAME from '../share/menu';
 
 
 function Home({ navigation }: { navigation: NavigationProp<any> }) {
@@ -126,7 +125,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-              onPress={() => navigation.navigate('AllFilm')}
+              onPress={() => navigation.navigate(SCREEN_NAME.ALL_FILM)}
             >
               Xem tất cả
             </Button>
@@ -145,7 +144,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-              onPress={() => navigation.navigate('AllFilm')}
+              onPress={() => navigation.navigate(SCREEN_NAME.ALL_FILM)}
             >
               Xem tất cả
             </Button>
@@ -166,7 +165,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-                onPress={() => navigation.navigate('AllFilm')}
+              onPress={() => navigation.navigate('AllFilm')}
             >
               Xem tất cả
             </Button>
@@ -185,7 +184,7 @@ function Home({ navigation }: { navigation: NavigationProp<any> }) {
             <Button
               mode="text"
               textColor="#FF4500"
-                onPress={() => navigation.navigate('AllFilm')}
+              onPress={() => navigation.navigate('AllFilm')}
             >
               Xem tất cả
             </Button>

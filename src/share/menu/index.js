@@ -17,6 +17,9 @@ const SCREEN_NAME = {
     PAGE_SETTING       : 'PageSetting',
     BILLING_INFO       : 'BillingInfo',
     WATCH_HISTORY      : 'WatchHistory',
+    PAYMENT_METHOD     : 'PaymentMethod',
+    PAYMENT_SUCCESS    : 'PaymentSuccess',
+    PAYMENT_ERROR      : 'PaymentError',
 }
 
 export default SCREEN_NAME;

@@ -19,6 +19,9 @@ import PageProfile from '../page/PageProfile';
 import PageSetting from '../page/PageSetting';
 import BillingInfo from '../page/BillingInfo';
 import WatchHistory from '../page/WatchHistory';
+import PaymentMethod from '../page/PaymentMethod';
+import PaymentSuccess from '../page/PaymentSuccess';
+import PaymentError from '../page/PaymentError';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -46,6 +49,16 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
             headerTintColor: ColorGeneral.primary,
           }}
         />
+        {/* <Stack.Screen
+          name={SCREEN_NAME.HOME}
+          component={Home}
+          options={{
+            headerShown: false,
+            title: 'Trang chủ',
+            headerTintColor: ColorGeneral.primary,
+          }}
+        /> */}
+
         <Stack.Screen
           name={SCREEN_NAME.BILLING_INFO}
           component={BillingInfo}
@@ -155,6 +168,28 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
             headerTintColor: ColorGeneral.primary,
           }}
         />
+        <Stack.Screen
+          name={SCREEN_NAME.PAYMENT_METHOD}
+          component={PaymentMethod}
+          options={{
+            headerShown: false,
+          }}
+        />
+            <Stack.Screen
+              name={SCREEN_NAME.PAYMENT_SUCCESS}
+              component={PaymentSuccess}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name={SCREEN_NAME.PAYMENT_ERROR}
+                component={PaymentError} 
+              options={{
+                headerShown: false,
+              }}
+            />
+
       </Stack.Navigator>
     </NavigationContainer>
   );
