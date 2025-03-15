@@ -22,6 +22,7 @@ import WatchHistory from '../page/WatchHistory';
 import PaymentMethod from '../page/PaymentMethod';
 import PaymentSuccess from '../page/PaymentSuccess';
 import PaymentError from '../page/PaymentError';
+import PaymentBank from '../page/PaymentBank';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -49,15 +50,15 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
             headerTintColor: ColorGeneral.primary,
           }}
         />
-        {/* <Stack.Screen
-          name={SCREEN_NAME.HOME}
-          component={Home}
+        <Stack.Screen
+          name={SCREEN_NAME.PAYMENT_BANK}
+          component={PaymentBank}
           options={{
             headerShown: false,
-            title: 'Trang chủ',
+            title: 'Thanh toán',
             headerTintColor: ColorGeneral.primary,
           }}
-        /> */}
+        />
 
         <Stack.Screen
           name={SCREEN_NAME.BILLING_INFO}

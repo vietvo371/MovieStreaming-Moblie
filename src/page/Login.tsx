@@ -2,157 +2,208 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  StyleSheet,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  Image,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
+  ActivityIndicator,
+  ScrollView,
+  SafeAreaView,
   StatusBar,
+  Image,
+  useWindowDimensions,
   Alert,
 } from 'react-native';
-
-import LinearGradient from 'react-native-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { saveUser } from '../utils/TokenManager';
 import api from '../utils/api';
-import { DisplayError, DisplayMessage } from '../../general/Notification';
-import { saveToken, saveUser } from '../utils/TokenManager';
+import { DisplayMessage } from '../../general/Notification';
+import { saveToken } from '../utils/TokenManager';
 
-const { width } = Dimensions.get('window');
+type RootStackParamList = {
+  Register: undefined;
+  MainApp: undefined;
+  ForgotPassword: undefined;
+};
 
-const Login = ({ navigation }: { navigation: any }) => {
-  const [username, setUsername] = useState('');
+const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStackParamList> }) => {
+  const { height, width } = useWindowDimensions();
+  const isSmallDevice = height < 700;
+
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const handleLogin = () => {
-    // if (!username || !password) {
-    //   Alert.alert('Vui lòng nhập đầy đủ thông tin!');
-    //   return;
-    // }
-    api.post('/khach-hang/login', {
-      email: username,
-      password: password,
-    }).then((res) => {
-      if (res.data.status) {
-        DisplayMessage(res);
-        saveToken(res.data.token);
-        saveUser(res.data.user);
+  const handleLogin = async () => {
+    console.log(email, password);
+    if (!email || !password) {
+      setError('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/khach-hang/login', {
+        email: email,
+        password: password,
+      });
+
+      if (response.data.status) {
+        await saveToken(response.data.token);
+        // await saveUser(response.data.user);
         navigation.replace('MainApp');
       } else {
-        if (res.data.message) {
-          Alert.alert('Thông báo', res.data.message);
-        } else {
-          Alert.alert('Thông báo', 'Đăng nhập thất bại');
-        }
+        setError(response.data.message || 'Đăng nhập thất bại');
       }
-    }).catch((err) => {
+    } catch (err: any) {
       if (err.response?.status === 422) {
-        const errorMessage = err.response.data?.message || 'Dữ liệu không hợp lệ';
-        Alert.alert('Thông báo', errorMessage);
+        setError(err.response.data?.message || 'Thông tin không hợp lệ');
       } else {
-        const errorMessage = err.response?.data?.message || 'Đã có lỗi xảy ra';
-        Alert.alert('Thông báo', errorMessage);
+        setError(err.response?.data?.message || 'Đã có lỗi xảy ra');
       }
       console.log('Login error:', err);
-    });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <LinearGradient
-        colors={['#0D0D0D', '#1A1A1A', '#0D0D0D']}
-        style={styles.gradient}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.content}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidView}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 10 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContentContainer,
+            { paddingTop: isSmallDevice ? height * 0.05 : height * 0.08 }
+          ]}
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.scrollContainer}>
-            <View style={styles.headerContainer}>
-              <Image
-                source={require('../assets/image/logoW.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-              <Text style={styles.title}>Đăng nhập</Text>
-              <Text style={styles.subtitle}>Chào mừng bạn trở lại!</Text>
-            </View>
-
-            <View style={styles.formContainer}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Tên đăng nhập</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Nhập tên đăng nhập của bạn"
-                  placeholderTextColor="#666"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                />
-              </View>
-
-              <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Mật khẩu</Text>
-                <View style={styles.passwordContainer}>
-                  <TextInput
-                    style={[styles.input, styles.passwordInput]}
-                    placeholder="Nhập mật khẩu của bạn"
-                    placeholderTextColor="#666"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeIcon}
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Text style={styles.eyeIconText}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.forgotPassword}
-                onPress={() => navigation.navigate('ForgotPassword')}
-              >
-                <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.loginButton}
-                onPress={handleLogin}
-              >
-                <LinearGradient
-                  colors={['#007AFF', '#00A2FF']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.gradientButton}
-                >
-                  <Text style={styles.loginButtonText}>ĐĂNG NHẬP</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+          {/* Header */}
+          <View style={[
+            styles.headerContainer,
+            { marginBottom: isSmallDevice ? height * 0.04 : height * 0.06 }
+          ]}>
+            <Text style={styles.logo}>M</Text>
+            <Text style={styles.title}>Chào mừng trở lại</Text>
+            <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
           </View>
 
-          <View style={styles.bottomContainer}>
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>HOẶC</Text>
-              <View style={styles.dividerLine} />
+          {/* Form */}
+          <View style={styles.formContainer}>
+            <View style={[
+              styles.inputContainer,
+              { marginBottom: isSmallDevice ? 16 : 20 }
+            ]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="#666666"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+              />
             </View>
 
+            <View style={[
+              styles.inputContainer,
+              { marginBottom: isSmallDevice ? 8 : 12 }
+            ]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Mật khẩu"
+                placeholderTextColor="#666666"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoComplete="password"
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Icon name={showPassword ? "eye-off" : "eye"} size={24} color="#666666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={[
+              styles.forgotPasswordContainer,
+              { marginBottom: isSmallDevice ? 16 : 24 }
+            ]}>
+              <View style={styles.checkboxContainer}>
+                <TouchableOpacity
+                  style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
+                  onPress={() => setRememberMe(!rememberMe)}
+                >
+                  {rememberMe && <Icon name="check" size={16} color="#FFFFFF" />}
+                </TouchableOpacity>
+                <Text style={styles.checkboxLabel}>Ghi nhớ đăng nhập</Text>
+              </View>
+
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+                <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+              </TouchableOpacity>
+            </View>
+
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+            <TouchableOpacity
+              style={[
+                styles.signInButton,
+                { marginBottom: isSmallDevice ? 20 : 32 }
+              ]}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.signInButtonText}>Đăng nhập</Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Social login section */}
+            <View style={[
+              styles.socialSection,
+              { marginBottom: isSmallDevice ? 20 : 32 }
+            ]}>
+              <Text style={styles.orText}>hoặc tiếp tục với</Text>
+              <View style={styles.socialButtons}>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/image/facebook.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/image/google.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.socialButton}>
+                  <Image source={require('../assets/image/apple.png')} style={styles.socialIcon} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Register link */}
             <View style={styles.registerContainer}>
               <Text style={styles.registerText}>Chưa có tài khoản? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.registerLink}>Đăng ký ngay</Text>
+                <Text style={styles.registerLink}>Đăng ký</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </KeyboardAvoidingView>
-      </LinearGradient>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -160,131 +211,143 @@ const Login = ({ navigation }: { navigation: any }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0D0D0D',
+    backgroundColor: '#1A1A1A',
   },
-  gradient: {
+  keyboardAvoidView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  scrollContainer: {
-    flex: 1,
+  scrollContentContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 24,
     justifyContent: 'center',
   },
   headerContainer: {
     alignItems: 'center',
-    marginBottom: 40,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: 20,
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#E31837',
+    marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#999',
+    color: '#999999',
   },
   formContainer: {
-    paddingHorizontal: 24,
+    flex: 1,
+    justifyContent: 'center',
   },
   inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  passwordContainer: {
     position: 'relative',
   },
   input: {
-    height: 55,
-    borderWidth: 1,
-    borderColor: '#333',
-    borderRadius: 12,
-    paddingHorizontal: 15,
-    fontSize: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#242424',
+    borderRadius: 16,
+    padding: 16,
     color: '#FFFFFF',
-  },
-  passwordInput: {
-    paddingRight: 50,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#333333',
   },
   eyeIcon: {
     position: 'absolute',
-    right: 15,
-    top: 15,
+    right: 16,
+    top: 16,
   },
-  eyeIconText: {
-    fontSize: 18,
-  },
-  forgotPassword: {
-    alignSelf: 'flex-end',
-    marginBottom: 30,
-  },
-  forgotPasswordText: {
-    color: '#999',
-    fontSize: 14,
-  },
-  loginButton: {
-    marginBottom: 30,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  gradientButton: {
-    padding: 16,
+  forgotPasswordContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  loginButtonText: {
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#333333',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#E31837',
+    borderColor: '#E31837',
+  },
+  checkboxLabel: {
+    color: '#FFFFFF',
+    fontSize: 14,
+  },
+  forgotPasswordText: {
+    color: '#E31837',
+    fontSize: 14,
+  },
+  signInButton: {
+    backgroundColor: '#E31837',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+  },
+  signInButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: 'bold',
-    letterSpacing: 1,
   },
-  divider: {
-    flexDirection: 'row',
+  socialSection: {
     alignItems: 'center',
-    marginBottom: 10,
-    marginTop: 20,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#333',
+  orText: {
+    color: '#666666',
+    fontSize: 14,
+    marginBottom: 16,
   },
-  dividerText: {
-    color: '#666',
-    paddingHorizontal: 10,
-    fontSize: 12,
-    fontWeight: 'bold',
+  socialButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  socialButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#242424',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
+    marginHorizontal: 8,
+  },
+  socialIcon: {
+    width: 24,
+    height: 24,
   },
   registerContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
   },
   registerText: {
-    color: '#999',
+    color: '#999999',
     fontSize: 14,
   },
   registerLink: {
-    color: '#007AFF',
+    color: '#E31837',
     fontSize: 14,
     fontWeight: 'bold',
   },
-  bottomContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 40,
+  errorText: {
+    color: '#E31837',
+    textAlign: 'center',
+    marginBottom: 16,
   },
 });
 

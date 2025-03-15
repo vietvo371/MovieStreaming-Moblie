@@ -20,6 +20,7 @@ const SCREEN_NAME = {
     PAYMENT_METHOD     : 'PaymentMethod',
     PAYMENT_SUCCESS    : 'PaymentSuccess',
     PAYMENT_ERROR      : 'PaymentError',
+    PAYMENT_BANK       : 'PaymentBank',
 }
 
 export default SCREEN_NAME;

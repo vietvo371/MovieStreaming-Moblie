@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,24 +6,91 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  Linking,
+  ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import SCREEN_NAME from '../share/menu';
+import api from '../utils/api';
+
 const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
   const route = useRoute();
   const { packageInfo } = route.params as { packageInfo: any };
-
-  const handlePaymentSelection = (method: string) => {
-    console.log('Phương thức thanh toán được chọn:', method);
-    // Xử lý thanh toán tại đây
-  };
+  const [payUrl, setPayUrl] = useState<string>('');
+  const [isLoadingMomo, setIsLoadingMomo] = useState<boolean>(false);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND'
     }).format(price);
+  };
+
+  const handlePaymentMomo = () => {
+    setIsLoadingMomo(true);
+    api.post('khach-hang/thanh-toan/momo/create', {
+      id_goi: packageInfo.id,
+    })
+      .then((res) => {
+        setIsLoadingMomo(false);
+        if (res.data.status === true) {
+          setPayUrl(res.data?.payUrl);
+          Linking.openURL(res.data?.payUrl);
+        }
+        else {
+          console.log(res.data.message);
+          navigation.navigate(SCREEN_NAME.PAYMENT_ERROR);
+        }
+      })
+      .catch((err: any) => {
+        setIsLoadingMomo(false);
+        console.log(err.data);
+      });
+  };
+  const handlePaymentVnpay = () => {
+    setIsLoadingMomo(true);
+    api.post('khach-hang/thanh-toan/vnpay/create', {
+      id_goi: packageInfo.id,
+    })
+      .then((res) => {
+        setIsLoadingMomo(false);
+        if (res.data.status === true) {
+          setPayUrl(res.data?.payUrl);
+          Linking.openURL(res.data?.payUrl);
+          }
+        else {
+          console.log(res.data.message);
+          navigation.navigate(SCREEN_NAME.PAYMENT_ERROR);
+        }
+      })
+      .catch((err: any) => {
+        setIsLoadingMomo(false);
+        console.log(err.data);
+      });
+  }
+
+  const handlePayment = () => {
+    if (!selectedMethod) {
+      // Hiển thị thông báo yêu cầu chọn phương thức thanh toán
+      console.log('Vui lòng chọn phương thức thanh toán');
+      return;
+    }
+
+    switch (selectedMethod) {
+      case 'bank':
+        navigation.navigate(SCREEN_NAME.PAYMENT_BANK, { id_goi: packageInfo.id });
+        break;
+      case 'momo':
+        handlePaymentMomo();
+        break;
+      case 'vnpay':
+        handlePaymentVnpay();
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -38,63 +105,93 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         <Text style={styles.headerTitle}>Phương thức thanh toán</Text>
         <View style={styles.placeholderView} />
       </View>
+      <ScrollView>
 
-      <View style={styles.packageInfo}>
-        <Text style={styles.packageName}>{packageInfo.ten_goi}</Text>
-        <Text style={styles.packagePrice}>{formatPrice(packageInfo.tien_sale)}</Text>
-      </View>
+        <View style={styles.packageInfoCard}>
+          <Text style={styles.packageLabel}>Gói đã chọn</Text>
+          <Text style={styles.packageName}>{packageInfo.ten_goi}</Text>
+          <Text style={styles.packagePrice}>{formatPrice(packageInfo.tien_sale)}</Text>
+        </View>
 
-      <View style={styles.paymentOptions}>
-        <TouchableOpacity
-          style={styles.paymentButton}
-          onPress={() => navigation.navigate(SCREEN_NAME.PAYMENT_SUCCESS)}
-        >
-          <Image
-            source={require('../assets/image/mbbank-logo-5.png')}
-            style={styles.paymentIcon}
-          />
-          <View style={styles.paymentTextContainer}>
-            <Text style={styles.paymentTitle}>Chuyển khoản ngân hàng</Text>
-            <Text style={styles.paymentDesc}>Thanh toán qua tài khoản ngân hàng</Text>
-          </View>
-          <Icon name="chevron-right" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+        <View style={styles.paymentOptions}>
+          <Text style={styles.sectionTitle}>Chọn phương thức thanh toán</Text>
 
-        <TouchableOpacity
-          style={styles.paymentButton}
-          onPress={() => navigation.navigate(SCREEN_NAME.PAYMENT_ERROR)}
-        >
-          <Image
-            source={require('../assets/image/momo-icon.png')}
-            style={styles.paymentIcon}
-          />
-          <View style={styles.paymentTextContainer}>
-            <Text style={styles.paymentTitle}>Ví MoMo</Text>
-            <Text style={styles.paymentDesc}>Thanh toán qua ví điện tử MoMo</Text>
-          </View>
-          <Icon name="chevron-right" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.paymentOption, selectedMethod === 'bank' && styles.selectedOption]}
+            onPress={() => setSelectedMethod('bank')}
+          >
+            <View style={styles.optionContent}>
+              <View style={styles.iconContainer}>
+                <Image
+                  source={require('../assets/image/mbbank-logo-5.png')}
+                  style={styles.paymentIcon}
+                />
+              </View>
+              <View style={styles.paymentTextContainer}>
+                <Text style={styles.paymentTitle}>Chuyển khoản ngân hàng</Text>
+                <Text style={styles.paymentDesc}>Thanh toán qua MB Bank</Text>
+              </View>
+            </View>
+            <View style={styles.radioButton}>
+              {selectedMethod === 'bank' && <View style={styles.radioButtonInner} />}
+            </View>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.paymentButton}
-          onPress={() => navigation.navigate(SCREEN_NAME.PAYMENT_ERROR)}
-        >
-          <Image
-            source={require('../assets/image/vnpay-icon.webp')}
-            style={styles.paymentIcon}
-          />
-          <View style={styles.paymentTextContainer}>
-            <Text style={styles.paymentTitle}>VNPAY</Text>
-            <Text style={styles.paymentDesc}>Thanh toán qua cổng VNPAY</Text>
-          </View>
-          <Icon name="chevron-right" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-      <View style={{ marginBottom: 100 }}>
+          <TouchableOpacity
+            style={[styles.paymentOption, selectedMethod === 'momo' && styles.selectedOption]}
+            onPress={() => setSelectedMethod('momo')}
+          >
+            <View style={styles.optionContent}>
+              <View style={styles.iconContainer}>
+                <Image
+                  source={require('../assets/image/momo-icon.png')}
+                  style={styles.paymentIcon}
+                />
+              </View>
+              <View style={styles.paymentTextContainer}>
+                <Text style={styles.paymentTitle}>Ví MoMo</Text>
+                <Text style={styles.paymentDesc}>Thanh toán qua ví điện tử MoMo</Text>
+              </View>
+            </View>
+            <View style={styles.radioButton}>
+              {selectedMethod === 'momo' && <View style={styles.radioButtonInner} />}
+            </View>
+          </TouchableOpacity>
 
-      </View>
+          <TouchableOpacity
+            style={[styles.paymentOption, selectedMethod === 'vnpay' && styles.selectedOption]}
+            onPress={() => setSelectedMethod('vnpay')}
+          >
+            <View style={styles.optionContent}>
+              <View style={styles.iconContainer}>
+                <Image
+                  source={require('../assets/image/vnpay-icon.webp')}
+                  style={styles.paymentIcon}
+                />
+              </View>
+              <View style={styles.paymentTextContainer}>
+                <Text style={styles.paymentTitle}>VNPAY</Text>
+                <Text style={styles.paymentDesc}>Thanh toán qua cổng VNPAY</Text>
+              </View>
+            </View>
+            <View style={styles.radioButton}>
+              {selectedMethod === 'vnpay' && <View style={styles.radioButtonInner} />}
+            </View>
+          </TouchableOpacity>
+        </View>
 
-
+        <View style={styles.payButtonContainer}>
+          <TouchableOpacity
+            style={[styles.payButton, !selectedMethod && styles.payButtonDisabled]}
+            onPress={handlePayment}
+            disabled={!selectedMethod || isLoadingMomo}
+          >
+            <Text style={styles.payButtonText}>
+              {isLoadingMomo ? 'Đang xử lý...' : 'Tiếp tục thanh toán'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -102,14 +199,14 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-
+    backgroundColor: '#1a1a1a',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     justifyContent: 'space-between',
+    backgroundColor: '#262626',
   },
   backButton: {
     width: 40,
@@ -127,32 +224,65 @@ const styles = StyleSheet.create({
   placeholderView: {
     width: 40,
   },
-  packageInfo: {
+  packageInfoCard: {
+    margin: 16,
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 20,
+    backgroundColor: '#262626',
+    borderRadius: 16,
+    elevation: 4,
+  },
+  packageLabel: {
+    fontSize: 14,
+    color: '#8A8A8A',
+    marginBottom: 8,
   },
   packageName: {
-    fontSize: 18,
+    fontSize: 20,
     color: '#FFFFFF',
+    fontWeight: 'bold',
     marginBottom: 8,
   },
   packagePrice: {
     fontSize: 24,
+    color: '#FF4500',
     fontWeight: 'bold',
-    color: '#FFFFFF',
   },
   paymentOptions: {
     padding: 16,
   },
-  paymentButton: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 16,
+  },
+  paymentOption: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: '#262626',
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  selectedOption: {
+    borderColor: '#FF4500',
+    backgroundColor: 'rgba(182, 109, 40, 0.15)',
+  },
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
   },
   paymentIcon: {
     width: 30,
@@ -165,15 +295,59 @@ const styles = StyleSheet.create({
   },
   paymentTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   paymentDesc: {
     fontSize: 14,
+    color: '#8A8A8A',
+  },
+  radioButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FF4500',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  radioButtonInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#FF4500',
+  },
+  payButtonContainer: {
+    padding: 16,
+    marginTop: 'auto',
+    backgroundColor: '#262626',
+  },
+  payButton: {
+    backgroundColor: '#FF4500',
+    borderRadius: 12,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#FF4500',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  payButtonDisabled: {
+    backgroundColor: '#FF4500',
+    shadowOpacity: 0,
+  },
+  payButtonText: {
     color: '#FFFFFF',
-    opacity: 0.7,
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 
-export default PaymentMethod; 
+export default PaymentMethod;
