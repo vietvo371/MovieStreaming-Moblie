@@ -6,7 +6,6 @@ import {
   FlatList,
   ActivityIndicator,
   Image,
-  ScrollView,
   TouchableOpacity,
   Dimensions,
   Animated,
@@ -14,13 +13,19 @@ import {
   RefreshControl,
   Platform,
   useWindowDimensions,
+  ImageBackground,
+  SafeAreaView,
+  Pressable,
 } from 'react-native';
-import { Button, IconButton } from 'react-native-paper';
 import { NavigationProp } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import Feather from 'react-native-vector-icons/Feather';
 import api from '../utils/api';
 import SCREEN_NAME from '../share/menu';
+
+// Lấy kích thước màn hình
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Định nghĩa kiểu dữ liệu Movie
 interface Movie {
@@ -28,6 +33,12 @@ interface Movie {
   slug_phim: string;
   ten_phim: string;
   hinh_anh: string;
+  thoi_luong?: string;
+  the_loai?: string;
+  nam_phat_hanh?: string;
+  quoc_gia?: string;
+  tong_luot_xem?: number;
+  ten_the_loais?: string;
 }
 
 interface Genre {
@@ -42,21 +53,16 @@ interface HomeProps {
   navigation: NavigationProp<any>;
 }
 
-interface MovieSectionProps {
+interface MovieRowProps {
   title: string;
   data: Movie[];
-  type: 'new' | 'hot';
   onViewAll: () => void;
+  onSelectMovie: (slug: string) => void;
+  showRank?: boolean;
+  type?: 'poster' | 'landscape';
 }
 
 const Home: React.FC<HomeProps> = ({ navigation }) => {
-  // Get window dimensions for responsive design
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const CARD_WIDTH = windowWidth * 0.42;
-  const CARD_HEIGHT = CARD_WIDTH * 1.5;
-  const SPACING = windowWidth * 0.03; // 3% of screen width
-  const isSmallDevice = windowHeight < 700;
-
   // State management
   const [genres, setGenres] = useState<Genre[]>([]);
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -65,19 +71,45 @@ const Home: React.FC<HomeProps> = ({ navigation }) => {
   const [completedMovies, setCompletedMovies] = useState<Movie[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
-  const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
-
+  const [featuredMovie, setFeaturedMovie] = useState<Movie | null>(null);
+  
   // Animation values
   const scrollY = useRef(new Animated.Value(0)).current;
   const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 100, 200],
-    outputRange: [0, 0.5, 1],
+    inputRange: [0, 100],
+    outputRange: [0, 1],
     extrapolate: 'clamp',
   });
 
-  // Fetch genres data
+  // Fetch data
+  const fetchMoviesData = useCallback(async () => {
+    try {
+      const response = await api.get('phim/lay-du-lieu-show');
+      const data = response.data;
+      console.log(data);
+
+      setMovies(data.phim_moi_cap_nhats || []);
+      setHotMovies(data.phim_hot || []);
+      setCompletedMovies(data.tat_ca_phim_hoan_thanh || []);
+      setMostViewedMovies(data.phim_xem_nhieu_nhat || []);
+      setGenres(data.ten_the_loais || []);
+      
+      // Set featured movie (first hot movie or most viewed)
+      if (data.phim_hot && data.phim_hot.length > 0) {
+        setFeaturedMovie(data.phim_hot[0]);
+      } else if (data.phim_xem_nhieu_nhat && data.phim_xem_nhieu_nhat.length > 0) {
+        setFeaturedMovie(data.phim_xem_nhieu_nhat[0]);
+      }
+      
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching movies:', error);
+      setError('Không thể tải danh sách phim');
+      setLoading(false);
+    }
+  }, []);
+
   const getGenres = useCallback(async () => {
     try {
       const response = await api.get('lay-data-the-loai-home');
@@ -89,49 +121,15 @@ const Home: React.FC<HomeProps> = ({ navigation }) => {
     }
   }, []);
 
-  // Fetch movies data
-  const fetchMoviesData = useCallback(async () => {
-    try {
-      const response = await api.get('phim/lay-du-lieu-show');
-      const data = response.data;
-
-      setMovies(data.phim_moi_cap_nhats || []);
-      setHotMovies(data.phim_hot || []);
-      setCompletedMovies(data.tat_ca_phim_hoan_thanh || []);
-      setMostViewedMovies(data.phim_xem_nhieu_nhat || []);
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching movies:', error);
-      setError('Không thể tải danh sách phim');
-      setLoading(false);
-    }
-  }, []);
-
-  // Handle pull-to-refresh
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await Promise.all([fetchMoviesData(), getGenres()]);
-    } catch (error) {
-      console.error('Error refreshing data:', error);
-    } finally {
-      setRefreshing(false);
-    }
+  useEffect(() => {
+    fetchMoviesData();
+    getGenres();
   }, [fetchMoviesData, getGenres]);
 
-  // Initial data loading
-  useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        await Promise.all([fetchMoviesData(), getGenres()]);
-      } catch (error) {
-        console.error('Error loading initial data:', error);
-        setError('Không thể tải dữ liệu, vui lòng thử lại');
-        setLoading(false);
-      }
-    };
-
-    loadInitialData();
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([fetchMoviesData(), getGenres()])
+      .finally(() => setRefreshing(false));
   }, [fetchMoviesData, getGenres]);
 
   // Navigation handlers
@@ -143,219 +141,158 @@ const Home: React.FC<HomeProps> = ({ navigation }) => {
     navigation.navigate(SCREEN_NAME.ALL_FILM);
   }, [navigation]);
 
-  const navigateToGenreFilm = useCallback((genre: any) => {
-    navigation.navigate('GenreFilm', {
-      slug: genre.slug,
-      ten_the_loai: genre.name
-    });
+  const navigateToSearch = useCallback(() => {
+    navigation.navigate('Search');
+  }, [navigation]);
+
+  const navigateToNotifications = useCallback(() => {
+    navigation.navigate('Notifications');
   }, [navigation]);
 
   const navigateToVIP = useCallback(() => {
     navigation.navigate('GoiVip');
   }, [navigation]);
 
-  // Render movie card
-  const renderMovieCard = useCallback((item: Movie, type: 'new' | 'hot', index: number) => {
-    if (!item || !item.hinh_anh) {
-      return null;
-    }
+  // Function to validate image URL
+  const getValidImageUrl = useCallback((url: string) => {
+    return { uri: url };
+  }, []);
 
-    const isFirstItem = index === 0;
-
-    return (
-      <TouchableOpacity
-        style={[
-          styles.cardContainer,
-          { 
-            width: CARD_WIDTH, 
-            marginLeft: isFirstItem ? SPACING : SPACING / 2 
-          }
-        ]}
-        activeOpacity={0.8}
-        onPress={() => navigateToMovieDetail(item.slug_phim)}
-      >
-        <View style={[styles.card, { height: CARD_HEIGHT }]}>
-          <View style={styles.imageContainer}>
-            {loadingImages[item.id] && (
-              <ActivityIndicator
-                style={styles.imageLoader}
-                size="small"
-                color="#FF4500"
-              />
-            )}
-            <Image
-              source={{ uri: item.hinh_anh }}
-              style={styles.movieImage}
-              onLoadStart={() => setLoadingImages(prev => ({ ...prev, [item.id]: true }))}
-              onLoadEnd={() => setLoadingImages(prev => ({ ...prev, [item.id]: false }))}
-              resizeMode="cover"
-              onError={() => setLoadingImages(prev => ({ ...prev, [item.id]: false }))}
-            />
-          </View>
-          <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.9)']}
-            style={styles.gradientOverlay}
-          />
-          <View style={styles.cardContent}>
-            <Text style={styles.movieTitle} numberOfLines={2}>{item.ten_phim}</Text>
-            <View style={styles.badgeContainer}>
-              <View style={[styles.badge, type === 'hot' ? styles.hotBadge : styles.newBadge]}>
-                <Text style={styles.badgeText}>{type === 'hot' ? 'HOT' : 'MỚI'}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Play Button Overlay */}
-          <View style={styles.playButtonContainer}>
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={() => navigateToMovieDetail(item.slug_phim)}
-            >
-              <Icon name="play" size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </TouchableOpacity>
-    );
-  }, [CARD_HEIGHT, CARD_WIDTH, SPACING, loadingImages, navigateToMovieDetail]);
-
-  // Render featured movie
-  const renderFeaturedMovie = useCallback((item: Movie) => {
-    if (!item || !item.hinh_anh) {
-      return null;
-    }
+  // Movie Row component
+  const MovieRow: React.FC<MovieRowProps> = useCallback(({
+    title,
+    data,
+    onViewAll,
+    onSelectMovie,
+    showRank = false,
+    type = 'poster'
+  }) => {
+    if (!data || data.length === 0) return null;
 
     return (
-      <TouchableOpacity
-        style={styles.featuredContainer}
-        activeOpacity={0.9}
-        onPress={() => navigateToMovieDetail(item.slug_phim)}
-      >
-        <View style={styles.featuredImageContainer}>
-          {loadingImages['featured'] && (
-            <ActivityIndicator
-              style={styles.featuredImageLoader}
-              size="large"
-              color="#FF4500"
-            />
-          )}
-          <Image
-            source={{ uri: item.hinh_anh }}
-            style={styles.featuredImage}
-            onLoadStart={() => setLoadingImages(prev => ({ ...prev, featured: true }))}
-            onLoadEnd={() => setLoadingImages(prev => ({ ...prev, featured: false }))}
-            resizeMode="cover"
-            onError={() => setLoadingImages(prev => ({ ...prev, featured: false }))}
-          />
-        </View>
-        <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.8)', 'rgba(0,0,0,0.9)']}
-          style={styles.featuredGradient}
-        >
-          <View style={styles.featuredContent}>
-            <Text style={styles.featuredTitle}>{item.ten_phim}</Text>
-            <View style={styles.featuredActions}>
-              <TouchableOpacity
-                style={styles.playNowButton}
-                onPress={() => navigateToMovieDetail(item.slug_phim)}
-              >
-                <Icon name="play" size={16} color="#FFFFFF" />
-                <Text style={styles.playNowText}>Xem ngay</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.addToFavButton}>
-                <Icon name="bookmark-outline" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  }, [loadingImages, navigateToMovieDetail]);
-
-  // Movie section component
-  const MovieSection = useCallback(({ title, data, type, onViewAll }: MovieSectionProps) => {
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return null;
-    }
-
-    return (
-      <View style={styles.section}>
+      <View style={styles.movieSection}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{title}</Text>
-          <TouchableOpacity onPress={onViewAll}>
-            <Text style={styles.viewAllText}>Xem tất cả</Text>
+          <TouchableOpacity 
+            style={styles.viewAllButton}
+            onPress={onViewAll}
+          >
+            <Text style={styles.seeAllText}>Xem tất cả</Text>
           </TouchableOpacity>
         </View>
+        
         <FlatList
-          data={data}
-          keyExtractor={(item) => item.id.toString()}
+          data={data.slice(0, 10)}
           horizontal
           showsHorizontalScrollIndicator={false}
-          renderItem={({ item, index }) => renderMovieCard(item, type, index)}
-          contentContainerStyle={[styles.movieList, { paddingRight: SPACING }]}
-          initialNumToRender={3}
-          maxToRenderPerBatch={5}
-          windowSize={5}
+          contentContainerStyle={styles.movieList}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item, index }) => (
+            <TouchableOpacity 
+              style={[
+                styles.movieCard,
+                type === 'landscape' && styles.movieCardLandscape
+              ]}
+              activeOpacity={0.7}
+              onPress={() => onSelectMovie(item.slug_phim)}
+            >
+              <View style={styles.movieImageContainer}>
+                <Image
+                  source={getValidImageUrl(item.hinh_anh)}
+                  style={[
+                    styles.movieImage,
+                    type === 'landscape' && styles.movieImageLandscape
+                  ]}
+                  resizeMode="cover"
+                />
+                
+                {showRank && (
+                  <View style={styles.rankContainer}>
+                    <Text style={styles.rankText}>{index + 1}</Text>
+                  </View>
+                )}
+                
+                <View style={styles.ratingContainer}>
+                  <Text style={styles.ratingText}>
+                    {item.tong_luot_xem} 
+                  </Text>
+                </View>
+                
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.8)']}
+                  style={styles.gradientOverlay}
+                />
+                
+                <View style={styles.movieInfo}>
+                  <Text style={styles.movieTitle} numberOfLines={2}>
+                    { showRank ? "" : item.ten_phim}
+                  </Text>
+                  {type === 'landscape' && (
+                    <Text style={styles.movieCategory} numberOfLines={1}>
+                    {item.ten_the_loais}
+                    </Text>
+                  )}
+                </View>
+                
+                <View style={styles.playIconContainer}>
+                  <Icon name="play-circle-outline" size={32} color="#FFFFFF" />
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
         />
       </View>
     );
-  }, [renderMovieCard]);
+  }, [getValidImageUrl]);
 
-  // Category tabs component
-  const CategoryTabs = useCallback(() => {
-    const allCategories = [
-      { id: 'all', name: 'Tất cả' },
-      ...genres.map(genre => ({
-        id: genre.id.toString(),
-        name: genre.ten_the_loai,
-        slug: genre.slug_the_loai
-      }))
-    ];
+  // Featured movie component
+  const renderFeaturedMovie = useCallback(() => {
+    if (!featuredMovie) return null;
 
     return (
-      <View style={styles.categoryTabsContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryTabs}
+      <View style={styles.featuredContainer}>
+        <ImageBackground
+          source={getValidImageUrl(featuredMovie.hinh_anh)}
+          style={styles.featuredImage}
+          resizeMode="cover"
         >
-          {allCategories.map(category => (
-            <TouchableOpacity
-              key={category.id}
-              style={[
-                styles.categoryTab,
-                activeTab === category.id && styles.activeTab
-              ]}
-              onPress={() => {
-                setActiveTab(category.id);
-                if (category.id === 'all') {
-                  navigateToAllFilms();
-                } else {
-                  navigateToGenreFilm(category);
-                }
-              }}
-            >
-              <Text
-                style={[
-                  styles.categoryTabText,
-                  activeTab === category.id && styles.activeTabText
-                ]}
-              >
-                {category.name}
+          <LinearGradient
+            colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.9)']}
+            style={styles.featuredGradient}
+          >
+            <View style={styles.featuredContent}>
+              <View style={styles.featuredBadge}>
+                <Text style={styles.featuredBadgeText}>HOT</Text>
+              </View>
+              
+              <Text style={styles.featuredTitle}>{featuredMovie.ten_phim}</Text>
+              <Text style={styles.featuredSubtitle}>
+                {featuredMovie.ten_the_loais}
               </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity 
+                  style={styles.playButton}
+                  onPress={() => navigateToMovieDetail(featuredMovie.slug_phim)}
+                >
+                  <Icon name="play" size={20} color="#FFFFFF" />
+                  <Text style={styles.playText}>Xem phim</Text>
+                </TouchableOpacity>
+                
+              </View>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
       </View>
     );
-  }, [genres, activeTab, navigateToAllFilms, navigateToGenreFilm]);
+  }, [featuredMovie, getValidImageUrl, navigateToMovieDetail]);
 
   // Loading state
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#0D0D0D" />
-        <ActivityIndicator size="large" color="#FF4500" />
+        <StatusBar barStyle="light-content" backgroundColor="#121212" />
+        <ActivityIndicator size="large" color="#E50914" />
         <Text style={styles.loadingText}>Đang tải phim...</Text>
       </View>
     );
@@ -365,11 +302,10 @@ const Home: React.FC<HomeProps> = ({ navigation }) => {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <StatusBar barStyle="light-content" backgroundColor="#0D0D0D" />
-        <Icon name="alert-circle-outline" size={60} color="#FF4500" />
+        <StatusBar barStyle="light-content" backgroundColor="#121212" />
+        <Icon name="alert-circle-outline" size={60} color="#E50914" />
         <Text style={styles.errorText}>{error}</Text>
-        <Button
-          mode="contained"
+        <TouchableOpacity
           style={styles.retryButton}
           onPress={() => {
             setLoading(true);
@@ -378,119 +314,113 @@ const Home: React.FC<HomeProps> = ({ navigation }) => {
             getGenres();
           }}
         >
-          Thử lại
-        </Button>
+          <Text style={styles.retryText}>Thử lại</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  // Animated header for scrolling
-  const AnimatedHeader = () => (
-    <Animated.View style={[
-      styles.animatedHeader,
-      { opacity: headerOpacity }
-    ]}>
-      <View style={styles.headerContent}>
-        <Image source={require('../assets/image/logoW.png')} style={styles.logoImageSmall} />
-        <View style={styles.headerActions}>
-          <IconButton icon="magnify" size={24} iconColor="#FFFFFF" onPress={() => {}} />
-          <IconButton icon="bell-outline" size={24} iconColor="#FFFFFF" onPress={() => {}} />
-        </View>
-      </View>
-    </Animated.View>
-  );
-
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      {/* Animated Header */}
-      <AnimatedHeader />
+      {/* Header - Transparent */}
+      <View style={styles.headerContainer}>
+        <Animated.View style={[styles.headerBackground, { opacity: headerOpacity }]} />
+        
+        <View style={styles.header}>
+          <Image 
+            source={require('../assets/image/logoW.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={navigateToSearch}
+            >
+              <Feather name="search" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={navigateToNotifications}
+            >
+              <Feather name="bell" size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.profileButton}
+              onPress={navigateToVIP}
+            >
+              <LinearGradient
+                colors={['#E50914', '#FF5722']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.profileGradient}
+              >
+                <Icon name="crown" size={16} color="#FFFFFF" />
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
 
       {/* Main Content */}
-      <Animated.ScrollView
-        showsVerticalScrollIndicator={false}
-        style={styles.content}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: isSmallDevice ? 60 : 80 }
-        ]}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: true }
+      <Animated.FlatList
+        data={[1]}
+        keyExtractor={() => "main"}
+        renderItem={() => (
+          <View style={styles.mainContent}>
+            {renderFeaturedMovie()}
+            
+            <MovieRow
+              title="Phim Xem Nhiều Nhất"
+              data={mostViewedMovies}
+              onViewAll={navigateToAllFilms}
+              onSelectMovie={navigateToMovieDetail}
+              showRank={true}
+            />
+            
+            <MovieRow
+              title="Phim Đề Xuất Cho Bạn"
+              data={hotMovies}
+              onViewAll={navigateToAllFilms}
+              onSelectMovie={navigateToMovieDetail}
+              type="landscape"
+            />
+
+            <MovieRow
+              title="Phim Mới Cập Nhật"
+              data={movies}
+              onViewAll={navigateToAllFilms}
+              onSelectMovie={navigateToMovieDetail}
+            />
+            
+            <MovieRow
+              title="Phim Đã Hoàn Thành"
+              data={completedMovies}
+              onViewAll={navigateToAllFilms}
+              onSelectMovie={navigateToMovieDetail}
+            />
+          </View>
         )}
-        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#FF4500"
-            colors={['#FF4500']}
+            onRefresh={handleRefresh}
+            tintColor="#E50914"
+            colors={["#E50914"]}
           />
         }
-      >
-        {/* Main Header */}
-        <View style={styles.mainHeader}>
-          <View style={styles.headerTop}>
-            <Image source={require('../assets/image/logoW.png')} style={styles.logoImage} />
-            <View style={styles.headerActions}>
-              <IconButton icon="magnify" size={26} iconColor="#FFFFFF" onPress={() => {}} />
-              <IconButton icon="bell-outline" size={26} iconColor="#FFFFFF" onPress={() => {}} />
-              <TouchableOpacity style={styles.profileButton} onPress={navigateToVIP}>
-                <LinearGradient
-                  colors={['#FF4500', '#FF8C00']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.profileGradient}
-                >
-                  <Icon name="crown" size={18} color="#FFFFFF" />
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeText}>Chào mừng trở lại</Text>
-            <Text style={styles.mainTitle}>Khám phá bộ phim yêu thích của bạn</Text>
-          </View>
-
-          {/* Category Tabs */}
-          <CategoryTabs />
-        </View>
-
-        {/* Featured Movie */}
-        {mostViewedMovies.length > 0 && renderFeaturedMovie(mostViewedMovies[0])}
-
-        {/* Movie Sections */}
-        <MovieSection
-          title="Phim xem nhiều nhất"
-          data={mostViewedMovies}
-          type="hot"
-          onViewAll={navigateToAllFilms}
-        />
-
-        <MovieSection
-          title="Phim mới cập nhật"
-          data={movies}
-          type="new"
-          onViewAll={navigateToAllFilms}
-        />
-
-        <MovieSection
-          title="Phim đã hoàn thành"
-          data={completedMovies}
-          type="hot"
-          onViewAll={navigateToAllFilms}
-        />
-
-        <MovieSection
-          title="Đề xuất cho bạn"
-          data={hotMovies}
-          type="hot"
-          onViewAll={navigateToAllFilms}
-        />
-      </Animated.ScrollView>
-    </View>
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      />
+    </SafeAreaView>
   );
 };
 
@@ -498,6 +428,61 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0A0A0A',
+  },
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  headerBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === 'android' ? 60 + (StatusBar.currentHeight || 0) : 80,
+    backgroundColor: '#0A0A0A',
+  },
+  header: {
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  profileButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    overflow: 'hidden',
+    marginLeft: 8,
+  },
+  profileGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logo: {
+    width: 100,
+    height: 40,
+  },
+  mainContent: {
+    flex: 1,
+    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,
@@ -517,289 +502,223 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-  retryButton: {
-    backgroundColor: '#FF4500',
-    marginTop: 20,
-    paddingHorizontal: 32,
-    borderRadius: 24,
-  },
-  content: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingTop: StatusBar.currentHeight || 0,
-  },
-  animatedHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    height: 60 + (StatusBar.currentHeight || 0),
-    paddingTop: StatusBar.currentHeight || 0,
-    backgroundColor: 'rgba(10, 10, 10, 0.9)',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    height: '100%',
-  },
-  mainHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoImage: {
-    width: 100,
-    height: 35,
-    resizeMode: 'contain',
-  },
-  logoImageSmall: {
-    width: 80,
-    height: 28,
-    resizeMode: 'contain',
-  },
-  profileButton: {
-    marginLeft: 8,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  profileGradient: {
-    width: 36,
-    height: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  welcomeSection: {
-    marginTop: 24,
-    marginBottom: 16,
-  },
-  welcomeText: {
-    fontSize: 16,
-    color: '#9E9E9E',
-    marginBottom: 4,
-  },
-  mainTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  errorText: {
     color: '#FFFFFF',
-  },
-  categoryTabsContainer: {
+    fontSize: 16,
+    textAlign: 'center',
     marginTop: 16,
   },
-  categoryTabs: {
-    paddingRight: 16,
+  retryButton: {
+    backgroundColor: '#E50914',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginTop: 20,
+    elevation: 3,
   },
-  categoryTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  activeTab: {
-    backgroundColor: '#FF4500',
-  },
-  categoryTabText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-  },
-  activeTabText: {
+  retryText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+    fontSize: 15,
   },
   featuredContainer: {
-    marginTop: 20,
-    height: 220,
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginHorizontal: 16,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  featuredImageContainer: {
     width: '100%',
-    height: '100%',
-    position: 'relative',
-  },
-  featuredImageLoader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-    backgroundColor: 'rgba(26, 26, 26, 0.5)',
+    height: SCREEN_HEIGHT * 0.65,
   },
   featuredImage: {
     width: '100%',
     height: '100%',
   },
   featuredGradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
+    width: '100%',
     height: '100%',
     justifyContent: 'flex-end',
-    padding: 16,
+    padding: 20,
   },
   featuredContent: {
-    width: '100%',
+    marginBottom: 24,
+  },
+  featuredBadge: {
+    backgroundColor: '#E50914',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+  },
+  featuredBadgeText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   featuredTitle: {
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#FFFFFF',
-    marginBottom: 16,
+    marginBottom: 8,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
-  featuredActions: {
+  featuredSubtitle: {
+    fontSize: 15,
+    color: '#CCCCCC',
+    marginBottom: 20,
+  },
+  buttonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  playNowButton: {
+  playButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FF4500',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 24,
+    justifyContent: 'center',
+    backgroundColor: '#E50914',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     marginRight: 12,
+    elevation: 4,
   },
-  playNowText: {
+  playText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
     marginLeft: 8,
+    fontSize: 15,
   },
-  addToFavButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
+  myListButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  section: {
-    marginTop: 24,
+  myListText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    marginLeft: 8,
+    fontSize: 15,
+  },
+  movieSection: {
+    marginTop: 30,
+    paddingHorizontal: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
-  viewAllText: {
+  viewAllButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  seeAllText: {
     fontSize: 14,
-    color: '#FF4500',
+    color: '#E50914',
     fontWeight: '500',
   },
   movieList: {
-    paddingRight: 12,
+    paddingRight: 8,
   },
-  cardContainer: {
-    marginRight: 6,
-  },
-  card: {
-    width: '100%',
-    borderRadius: 12,
+  movieCard: {
+    width: 120,
+    height: 180,
+    marginRight: 12,
+    borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#1A1A1A',
-    elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
+    elevation: 5,
   },
-  imageContainer: {
+  movieCardLandscape: {
+    width: 220,
+    height: 130,
+  },
+  movieImageContainer: {
+    width: '100%',
     height: '100%',
     position: 'relative',
-  },
-  imageLoader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-    backgroundColor: 'rgba(26, 26, 26, 0.5)',
   },
   movieImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
+  },
+  movieImageLandscape: {
+    borderRadius: 8,
+  },
+  rankContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    zIndex: 10,
+    width: 28,
+    height: 28,
+    backgroundColor: '#E50914',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopRightRadius: 8,
+  },
+  rankText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  ratingContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#E50914',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderBottomLeftRadius: 8,
+    zIndex: 10,
+  },
+  ratingText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   gradientOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '60%',
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
+    height: '50%',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
   },
-  cardContent: {
+  movieInfo: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 12,
+    padding: 8,
+    zIndex: 10,
   },
   movieTitle: {
-    fontSize: 14,
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 8,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    marginBottom: 2,
   },
-  badgeContainer: {
-    flexDirection: 'row',
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  hotBadge: {
-    backgroundColor: '#FF4500',
-  },
-  newBadge: {
-    backgroundColor: '#00C853',
-  },
-  badgeText: {
-    color: '#FFFFFF',
+  movieCategory: {
+    color: '#CCCCCC',
     fontSize: 10,
-    fontWeight: 'bold',
   },
-  playButtonContainer: {
+  playIconContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
@@ -808,20 +727,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     opacity: 0,
-  },
-  playButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 69, 0, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    textAlign: 'center',
-    marginTop: 16,
   },
 });
 
