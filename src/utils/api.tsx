@@ -2,8 +2,8 @@ import axios from "axios";
 import { getToken, saveToken } from "./TokenManager";
 import Toast from "react-native-toast-message";
 
-const baseUrl = 'http://192.168.20.20:8000/api';
-// const baseUrl = 'http://192.168.1.130:8000/api';
+// const baseUrl = 'http://192.168.20.20:8000/api';
+const baseUrl = 'http://192.168.1.130:8000/api';
 const api = axios.create({
     baseURL: baseUrl,
     headers: {
@@ -87,4 +87,4 @@ api.interceptors.response.use(
     // }
 );
 
-export default api;
+export { api, baseUrl };

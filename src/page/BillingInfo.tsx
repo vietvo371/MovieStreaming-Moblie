@@ -10,7 +10,7 @@ import {
 import { Surface } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useState, useCallback } from 'react';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 interface Bill {
   ma_hoa_don: string;

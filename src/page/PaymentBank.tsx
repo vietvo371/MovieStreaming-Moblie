@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import SCREEN_NAME from '../share/menu';
 

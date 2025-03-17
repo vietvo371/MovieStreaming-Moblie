@@ -11,7 +11,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useWindowDimensions } from 'react-native';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 interface BlogPost {
   id: number;

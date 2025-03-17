@@ -16,7 +16,7 @@ const PaymentError = ({ navigation }: { navigation: NavigationProp<any> }) => {
         <View style={styles.iconContainer}>
           <Icon name="error" size={100} color="#FF4500" />
         </View>
-        
+
         <Text style={styles.title}>Thanh toán thất bại!</Text>
         <Text style={styles.message}>
           Rất tiếc, đã xảy ra lỗi trong quá trình thanh toán.
@@ -39,24 +39,24 @@ const PaymentError = ({ navigation }: { navigation: NavigationProp<any> }) => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.button, styles.retryButton]}
             onPress={() => navigation.goBack()}
           >
             <Text style={styles.buttonText}>Thử lại</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.button, styles.changeMethodButton]}
-            onPress={() => navigation.navigate('PaymentMethod')}
+            onPress={() => navigation.goBack()}
           >
             <Text style={styles.buttonText}>Đổi phương thức thanh toán</Text>
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.supportButton}
-          onPress={() => {/* Xử lý hỗ trợ */}}
+          onPress={() => {/* Xử lý hỗ trợ */ }}
         >
           <Icon name="headset-mic" size={20} color="#FFFFFF" />
           <Text style={styles.supportText}>Liên hệ hỗ trợ</Text>

@@ -21,6 +21,9 @@ const SCREEN_NAME = {
     PAYMENT_SUCCESS    : 'PaymentSuccess',
     PAYMENT_ERROR      : 'PaymentError',
     PAYMENT_BANK       : 'PaymentBank',
+    PAYMENT_WEBVIEW    : 'PaymentWebView',
+    STATUS_PAYMENT     : 'StatusPayment',
+    GOOGLE_LOGIN       : 'GoogleLogin',
 }
 
 export default SCREEN_NAME;

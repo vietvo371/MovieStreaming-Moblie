@@ -23,6 +23,9 @@ import PaymentMethod from '../page/PaymentMethod';
 import PaymentSuccess from '../page/PaymentSuccess';
 import PaymentError from '../page/PaymentError';
 import PaymentBank from '../page/PaymentBank';
+import PaymentWebView from '../screens/PaymentWebView';
+import StatusPayment from '../page/StatusPayment';
+import GoogleLogin from '../screens/GoogleLogin';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -50,6 +53,14 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
             headerTintColor: ColorGeneral.primary,
           }}
         />
+        <Stack.Screen
+          name={SCREEN_NAME.PAYMENT_WEBVIEW}
+          component={PaymentWebView}
+          options={{
+            headerShown: false,
+          }}
+        />
+
         <Stack.Screen
           name={SCREEN_NAME.PAYMENT_BANK}
           component={PaymentBank}
@@ -190,7 +201,20 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
                 headerShown: false,
               }}
             />
-
+            <Stack.Screen
+              name={SCREEN_NAME.STATUS_PAYMENT}
+              component={StatusPayment}
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name={SCREEN_NAME.GOOGLE_LOGIN}
+              component={GoogleLogin}
+              options={{
+                headerShown: false,
+              }}
+            />
       </Stack.Navigator>
     </NavigationContainer>
   );

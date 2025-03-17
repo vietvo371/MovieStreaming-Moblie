@@ -14,19 +14,23 @@ import {
   Image,
   useWindowDimensions,
   Alert,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { saveUser } from '../utils/TokenManager';
-import api from '../utils/api';
+import { api, baseUrl } from '../utils/api';
 import { DisplayMessage } from '../../general/Notification';
 import { saveToken } from '../utils/TokenManager';
+import WebView from 'react-native-webview';
+import SCREEN_NAME from '../share/menu';
 
 type RootStackParamList = {
   Register: undefined;
   MainApp: undefined;
   ForgotPassword: undefined;
+  GoogleLogin: { url: string };
 };
 
 const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStackParamList> }) => {
@@ -75,6 +79,12 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
     }
   };
 
+  const handleLoginWithGoogle = () => {
+    navigation.navigate("GoogleLogin", {
+      url: `${baseUrl}/auth/google`,
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -95,7 +105,13 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
             styles.headerContainer,
             { marginBottom: isSmallDevice ? height * 0.04 : height * 0.06 }
           ]}>
-            <Text style={styles.logo}>M</Text>
+            <Image
+              source={require('../assets/image/logoW.png')}
+              style={[
+                styles.logo
+              ]}
+              resizeMode="cover"
+            />
             <Text style={styles.title}>Chào mừng trở lại</Text>
             <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
           </View>
@@ -185,8 +201,10 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
                 <TouchableOpacity style={styles.socialButton}>
                   <Image source={require('../assets/image/facebook.png')} style={styles.socialIcon} />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/image/google.png')} style={styles.socialIcon} />
+                <TouchableOpacity onPress={() => {
+                  handleLoginWithGoogle();
+                }} style={styles.socialButton}>
+                  <Image source={require('../assets/image/google-icon.png')} style={styles.socialIcon} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.socialButton}>
                   <Image source={require('../assets/image/apple.png')} style={styles.socialIcon} />

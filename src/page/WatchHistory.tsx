@@ -12,7 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Surface } from 'react-native-paper';
 import { useState, useCallback } from 'react';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 const { width } = Dimensions.get('window');
 

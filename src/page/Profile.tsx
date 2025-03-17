@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Button } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 import { removeToken } from '../utils/TokenManager';
 import { DisplayError } from '../../general/Notification';
 

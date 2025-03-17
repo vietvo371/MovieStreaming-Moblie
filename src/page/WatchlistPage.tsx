@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 import { DisplayError } from '../../general/Notification';
 
 const { width } = Dimensions.get('window');

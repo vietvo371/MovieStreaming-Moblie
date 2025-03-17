@@ -13,7 +13,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import SCREEN_NAME from '../share/menu';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 type MovieDetail = {
   id: number;

@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 const categories = [
   { id: 'single', name: 'Phim Lẻ', icon: 'movie-outline', slug: 'phim-le' },

@@ -12,7 +12,7 @@ import {
 import { Button } from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 const { width } = Dimensions.get('window');
 const ITEM_WIDTH = (width - 48) / 2;

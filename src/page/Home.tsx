@@ -21,7 +21,7 @@ import { NavigationProp } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Feather from 'react-native-vector-icons/Feather';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 import SCREEN_NAME from '../share/menu';
 
 // Lấy kích thước màn hình
@@ -344,13 +344,6 @@ const Home: React.FC<HomeProps> = ({ navigation }) => {
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.headerButton}
-              onPress={navigateToNotifications}
-            >
-              <Feather name="bell" size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
               style={styles.profileButton}
               onPress={navigateToVIP}
             >
@@ -446,6 +439,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0A0A0A',
   },
   header: {
+    paddingTop: 10,
     height: 60,
     flexDirection: 'row',
     alignItems: 'center',

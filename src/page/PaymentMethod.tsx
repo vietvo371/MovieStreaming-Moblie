@@ -12,7 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import SCREEN_NAME from '../share/menu';
-import api from '../utils/api';
+import{ api } from  '../utils/api';
 
 const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
   const route = useRoute();
@@ -37,7 +37,10 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         setIsLoadingMomo(false);
         if (res.data.status === true) {
           setPayUrl(res.data?.payUrl);
-          Linking.openURL(res.data?.payUrl);
+          navigation.navigate(SCREEN_NAME.PAYMENT_WEBVIEW, {
+            url: res.data.payUrl,
+            orderId: packageInfo.id
+          });
         }
         else {
           console.log(res.data.message);
@@ -58,7 +61,10 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         setIsLoadingMomo(false);
         if (res.data.status === true) {
           setPayUrl(res.data?.payUrl);
-          Linking.openURL(res.data?.payUrl);
+          navigation.navigate(SCREEN_NAME.PAYMENT_WEBVIEW, {
+            url: res.data.payUrl,
+            orderId: packageInfo.id
+          });
           }
         else {
           console.log(res.data.message);
