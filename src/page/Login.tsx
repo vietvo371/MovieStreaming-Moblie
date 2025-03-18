@@ -251,12 +251,24 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
             </TouchableOpacity>
 
             {/* Social login section */}
-            <GoogleSigninButton
-          style={styles.googleButton}
-          size={GoogleSigninButton.Size.Wide}
-          color={GoogleSigninButton.Color.Dark}
-          onPress={handleLoginWithGoogle}
-        />
+            <View style={styles.socialSection}>
+              <View style={styles.dividerContainer}>
+                <View style={styles.divider} />
+                <Text style={styles.orText}>Hoặc đăng nhập với</Text>
+                <View style={styles.divider} />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.googleButton}
+                onPress={handleLoginWithGoogle}
+              >
+                <Image 
+                  source={require('../assets/image/google-icon.png')} 
+                  style={styles.googleIcon} 
+                />
+                <Text style={styles.googleButtonText}>Tiếp tục với Google</Text>
+              </TouchableOpacity>
+            </View>
 
             {/* Register link */}
             <View style={styles.registerContainer}>
@@ -370,31 +382,43 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   socialSection: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#333333',
   },
   orText: {
-    color: '#666666',
+    color: '#999999',
+    marginHorizontal: 10,
     fontSize: 14,
-    marginBottom: 16,
   },
-  socialButtons: {
+  googleButton: {
     flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  socialButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#242424',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#242424',
+    padding: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#333333',
-    marginHorizontal: 8,
   },
-  socialIcon: {
+  googleIcon: {
     width: 24,
     height: 24,
+    marginRight: 12,
+  },
+  googleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '500',
   },
   registerContainer: {
     flexDirection: 'row',
@@ -413,10 +437,6 @@ const styles = StyleSheet.create({
     color: '#E31837',
     textAlign: 'center',
     marginBottom: 16,
-  },
-  googleButton: {
-   borderRadius: 16,
-   marginBottom: 10,
   },
 });
 
