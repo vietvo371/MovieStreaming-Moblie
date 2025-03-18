@@ -10,6 +10,7 @@ import Toast from 'react-native-toast-message';
 // import { toastConfig } from './src/const/ToastCustom';
 import Tabs from './src/navigator/Tab';
 import Screens from './src/navigator/AppNavigator';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 function TabNavigator() {
     return (
@@ -18,6 +19,11 @@ function TabNavigator() {
 }
 
 const App = () => {
+    GoogleSignin.configure({
+        webClientId: '944810457078-bcpb0ss9ampvm92eoj59k34p9hrdgg15.apps.googleusercontent.com', // Lấy từ Google Cloud Console
+        offlineAccess: true,
+        forceCodeForRefreshToken: true, // Buộc yêu cầu refresh token mới
+    });
     return (
         <>
             <Screens TabNavigator={TabNavigator} />

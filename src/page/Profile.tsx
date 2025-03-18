@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import{ api } from  '../utils/api';
 import { removeToken } from '../utils/TokenManager';
 import { DisplayError } from '../../general/Notification';
-
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 interface User {
   id: number;
   ho_va_ten: string;
@@ -27,6 +27,12 @@ export default function PageProfile({ navigation }: { navigation: any }) {
   const [user, setUser] = useState<User | null>(null);
 
   const handleLogout = () => {
+    GoogleSignin.configure({
+      webClientId: '944810457078-bcpb0ss9ampvm92eoj59k34p9hrdgg15.apps.googleusercontent.com', // Lấy từ Google Cloud Console
+      offlineAccess: true,
+      forceCodeForRefreshToken: true, // Buộc yêu cầu refresh token mới
+    });
+    GoogleSignin.signOut();
     removeToken();
     navigation.navigate('Login');
   };

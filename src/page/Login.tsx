@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   useWindowDimensions,
   Alert,
   Linking,
+  Animated,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,11 +26,13 @@ import { DisplayMessage } from '../../general/Notification';
 import { saveToken } from '../utils/TokenManager';
 import WebView from 'react-native-webview';
 import SCREEN_NAME from '../share/menu';
+import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+
 
 type RootStackParamList = {
   Register: undefined;
   MainApp: undefined;
-  ForgotPassword: undefined;
+  ForgetPass: undefined;
   GoogleLogin: { url: string };
 };
 
@@ -43,7 +46,22 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
   const handleLogin = async () => {
     console.log(email, password);
     if (!email || !password) {
@@ -79,12 +97,53 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
     }
   };
 
-  const handleLoginWithGoogle = () => {
-    navigation.navigate("GoogleLogin", {
-      url: `${baseUrl}/auth/google`,
-    });
+  // const handleLoginWithGoogle = () => {
+  //   navigation.navigate("GoogleLogin", {
+  //     url: `${baseUrl}/auth/google`,
+  //   });
+  // };
+  GoogleSignin.configure({
+    webClientId: '944810457078-bcpb0ss9ampvm92eoj59k34p9hrdgg15.apps.googleusercontent.com', // Lấy từ Google Cloud Console
+    offlineAccess: true,
+    forceCodeForRefreshToken: true, // Buộc yêu cầu refresh token mới
+  });
+  const handleLoginWithGoogle = async () => {
+    try {
+      // await GoogleSignin.revokeAccess();
+      // await GoogleSignin.signOut();
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      if (userInfo) {
+        console.log('User info:', userInfo);
+        handleGoogleAuthentication(userInfo);
+      } else {
+        console.log('User info:', userInfo);
+      }
+      // Xử lý đăng nhập thành công
+    } catch (error) {
+      console.error('Google Sign-In Error:', error);
+    }
   };
+  // Gửi idToken đến backend Laravel
+  const handleGoogleAuthentication = async (userInfo: any) => {
+    console.log(userInfo.data.idToken);
+    try {
+      const response = await api.post('/khach-hang/login-google', {
+        id_token: userInfo.data.idToken
+      });
+      
 
+      if (response.data.status === true) {
+        await saveToken(response.data.token);
+        navigation.replace('MainApp');
+        // Lưu token vào AsyncStorage
+        Alert.alert('Thành công', 'Đăng nhập thành công!');
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      Alert.alert('Lỗi kết nối', 'Không thể kết nối đến server');
+    }
+  };
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -169,7 +228,7 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
                 <Text style={styles.checkboxLabel}>Ghi nhớ đăng nhập</Text>
               </View>
 
-              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
+              <TouchableOpacity onPress={() => navigation.navigate('ForgetPass')}>
                 <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
               </TouchableOpacity>
             </View>
@@ -192,25 +251,12 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
             </TouchableOpacity>
 
             {/* Social login section */}
-            <View style={[
-              styles.socialSection,
-              { marginBottom: isSmallDevice ? 20 : 32 }
-            ]}>
-              <Text style={styles.orText}>hoặc tiếp tục với</Text>
-              <View style={styles.socialButtons}>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/image/facebook.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => {
-                  handleLoginWithGoogle();
-                }} style={styles.socialButton}>
-                  <Image source={require('../assets/image/google-icon.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <Image source={require('../assets/image/apple.png')} style={styles.socialIcon} />
-                </TouchableOpacity>
-              </View>
-            </View>
+            <GoogleSigninButton
+          style={styles.googleButton}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+          onPress={handleLoginWithGoogle}
+        />
 
             {/* Register link */}
             <View style={styles.registerContainer}>
@@ -227,6 +273,7 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
 };
 
 const styles = StyleSheet.create({
+  
   container: {
     flex: 1,
     backgroundColor: '#1A1A1A',
@@ -366,6 +413,10 @@ const styles = StyleSheet.create({
     color: '#E31837',
     textAlign: 'center',
     marginBottom: 16,
+  },
+  googleButton: {
+   borderRadius: 16,
+   marginBottom: 10,
   },
 });
 

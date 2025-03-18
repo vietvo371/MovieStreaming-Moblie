@@ -24,6 +24,7 @@ const SCREEN_NAME = {
     PAYMENT_WEBVIEW    : 'PaymentWebView',
     STATUS_PAYMENT     : 'StatusPayment',
     GOOGLE_LOGIN       : 'GoogleLogin',
+    FORGET_PASS        : 'ForgetPass',
 }
 
 export default SCREEN_NAME;

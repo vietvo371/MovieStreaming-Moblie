@@ -21,16 +21,17 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { api } from '../utils/api';
-
+import { saveToken } from '../utils/TokenManager';
+import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 type RootStackParamList = {
   Login: undefined;
+  MainApp: undefined;
 };
 
-const Register = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+const Register = ({ navigation }: { navigation: NativeStackNavigationProp<RootStackParamList> }) => {
   const { height, width } = useWindowDimensions();
   const isSmallDevice = height < 700;
-  
+
   // Form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,16 +42,16 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
-  
+
   // Input refs for focus handling
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
-  
+
   // Animate components on mount
   React.useEffect(() => {
     Animated.parallel([
@@ -66,30 +67,72 @@ const Register = () => {
       }),
     ]).start();
   }, []);
-  
+  GoogleSignin.configure({
+    webClientId: '944810457078-bcpb0ss9ampvm92eoj59k34p9hrdgg15.apps.googleusercontent.com', // Lấy từ Google Cloud Console
+    offlineAccess: true,
+    forceCodeForRefreshToken: true, // Buộc yêu cầu refresh token mới
+  });
+  const handleLoginWithGoogle = async () => {
+    try {
+      // await GoogleSignin.revokeAccess();
+      // await GoogleSignin.signOut();
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      if (userInfo) {
+        console.log('User info:', userInfo);
+        handleGoogleAuthentication(userInfo);
+      } else {
+        console.log('User info:', userInfo);
+      }
+      // Xử lý đăng nhập thành công
+    } catch (error) {
+      console.error('Google Sign-In Error:', error);
+    }
+  };
+  // Gửi idToken đến backend Laravel
+  const handleGoogleAuthentication = async (userInfo: any) => {
+    console.log(userInfo.data.idToken);
+    try {
+      const response = await api.post('/khach-hang/login-google', {
+        id_token: userInfo.data.idToken
+      });
+
+
+      if (response.data.status === true) {
+        await saveToken(response.data.token);
+        navigation.replace('MainApp');
+        // Lưu token vào AsyncStorage
+        Alert.alert('Thành công', 'Đăng nhập thành công!');
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      Alert.alert('Lỗi kết nối', 'Không thể kết nối đến server');
+    }
+  };
+
   // Validate form fields
   const validateForm = () => {
     if (!name.trim()) {
       setError('Vui lòng nhập họ và tên');
       return false;
     }
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Email không hợp lệ');
       return false;
     }
-    
+
     if (password.length < 6) {
       setError('Mật khẩu phải có ít nhất 6 ký tự');
       return false;
     }
-    
+
     if (password !== confirmPassword) {
       setError('Mật khẩu không khớp');
       return false;
     }
-    
+
     return true;
   };
 
@@ -126,7 +169,7 @@ const Register = () => {
       setLoading(false);
     }
   };
- 
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
@@ -147,10 +190,10 @@ const Register = () => {
             showsVerticalScrollIndicator={false}
           >
             {/* Header */}
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.headerContainer,
-                { 
+                {
                   marginBottom: isSmallDevice ? height * 0.03 : height * 0.05,
                   opacity: fadeAnim,
                   transform: [{ translateY: slideAnim }]
@@ -168,7 +211,7 @@ const Register = () => {
             </Animated.View>
 
             {/* Form */}
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.formContainer,
                 {
@@ -220,14 +263,14 @@ const Register = () => {
                   returnKeyType="next"
                   onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                 />
-                <TouchableOpacity 
-                  style={styles.eyeIcon} 
+                <TouchableOpacity
+                  style={styles.eyeIcon}
                   onPress={() => setShowPassword(!showPassword)}
                 >
-                  <Icon 
-                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                    size={20} 
-                    color="#999999" 
+                  <Icon
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#999999"
                   />
                 </TouchableOpacity>
               </View>
@@ -245,14 +288,14 @@ const Register = () => {
                   returnKeyType="done"
                   onSubmitEditing={handleRegister}
                 />
-                <TouchableOpacity 
-                  style={styles.eyeIcon} 
+                <TouchableOpacity
+                  style={styles.eyeIcon}
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
-                  <Icon 
-                    name={showConfirmPassword ? "eye-off-outline" : "eye-outline"} 
-                    size={20} 
-                    color="#999999" 
+                  <Icon
+                    name={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#999999"
                   />
                 </TouchableOpacity>
               </View>
@@ -290,25 +333,12 @@ const Register = () => {
                 )}
               </TouchableOpacity>
 
-              <View style={styles.socialSection}>
-                <View style={styles.dividerContainer}>
-                  <View style={styles.divider} />
-                  <Text style={styles.orText}>hoặc tiếp tục với</Text>
-                  <View style={styles.divider} />
-                </View>
-                
-                <View style={styles.socialButtons}>
-                  <TouchableOpacity style={styles.socialButton}>
-                    <Image source={require('../assets/image/facebook.png')} style={styles.socialIcon} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}>
-                    <Image source={require('../assets/image/google-icon.png')} style={styles.socialIcon} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.socialButton}>
-                    <Image source={require('../assets/image/apple.png')} style={styles.socialIcon} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <GoogleSigninButton
+          style={styles.googleButton}
+          size={GoogleSigninButton.Size.Wide}
+          color={GoogleSigninButton.Color.Dark}
+          onPress={handleLoginWithGoogle}
+        />
 
               <View style={styles.loginContainer}>
                 <Text style={styles.loginText}>Đã có tài khoản? </Text>
@@ -492,7 +522,7 @@ const styles = StyleSheet.create({
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 32,
+    marginTop: 23,
   },
   loginText: {
     color: '#999999',
@@ -502,6 +532,10 @@ const styles = StyleSheet.create({
     color: '#E31837',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  googleButton: {
+    marginTop: 10,
+    borderRadius: 16,
   },
 });
 

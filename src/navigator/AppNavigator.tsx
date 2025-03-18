@@ -26,6 +26,7 @@ import PaymentBank from '../page/PaymentBank';
 import PaymentWebView from '../screens/PaymentWebView';
 import StatusPayment from '../page/StatusPayment';
 import GoogleLogin from '../screens/GoogleLogin';
+import ForgetPass from '../page/ForgetPass';
 const Stack = createNativeStackNavigator();
 
 type ScreensProps = {
@@ -213,6 +214,13 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
               component={GoogleLogin}
               options={{
                 headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name={SCREEN_NAME.FORGET_PASS}
+              component={ForgetPass}
+              options={{
+                headerShown: false, 
               }}
             />
       </Stack.Navigator>

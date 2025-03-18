@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "944810457078",
+    "project_id": "login-c5a4c",
+    "storage_bucket": "login-c5a4c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:944810457078:android:0c7819d6fa0ef7b0c679d7",
+        "android_client_info": {
+          "package_name": "com.MovieMobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "944810457078-cd2su5i36u9t8cg4g7bm1qsd18m62i7p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.MovieMobile",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "944810457078-bcpb0ss9ampvm92eoj59k34p9hrdgg15.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAjLvO1-x6rElwJaXHuHNFEazmCduOgTMg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "944810457078-bcpb0ss9ampvm92eoj59k34p9hrdgg15.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
