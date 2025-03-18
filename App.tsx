@@ -7,6 +7,7 @@
 
 import React from 'react';
 import Toast from 'react-native-toast-message';
+import 'react-native-gesture-handler';
 // import { toastConfig } from './src/const/ToastCustom';
 import Tabs from './src/navigator/Tab';
 import Screens from './src/navigator/AppNavigator';

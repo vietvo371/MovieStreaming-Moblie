@@ -1,4 +1,8 @@
+import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import OnboardingScreen from '../pages/Onboarding/OnboardingScreen';
 import LoginPage from '../page/Login';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ColorGeneral } from '../const/ColorGeneral';
@@ -27,20 +31,38 @@ import PaymentWebView from '../screens/PaymentWebView';
 import StatusPayment from '../page/StatusPayment';
 import GoogleLogin from '../screens/GoogleLogin';
 import ForgetPass from '../page/ForgetPass';
-const Stack = createNativeStackNavigator();
+const Stack = createStackNavigator();
 
 type ScreensProps = {
   TabNavigator: React.ComponentType<any>;
 };
 
 const AppNavigator = ({ TabNavigator }: ScreensProps) => {
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    AsyncStorage.getItem('alreadyLaunched').then(value => {
+      if (value === null) {
+        AsyncStorage.setItem('alreadyLaunched', 'true');
+        setIsFirstLaunch(true);
+      } else {
+        setIsFirstLaunch(false);
+      }
+    });
+  }, []);
+
+  if (isFirstLaunch === null) {
+    return null; // Hoặc hiển thị màn hình splash
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{ headerShown: false }}
-        initialRouteName={SCREEN_NAME.LOADING}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isFirstLaunch ? (
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        ) : null}
+        <Stack.Screen name="Main" component={TabNavigator} />
         <Stack.Screen name="Loading" component={Loading} />
-        <Stack.Screen name="MainApp" component={TabNavigator} />
         <Stack.Screen
           name={SCREEN_NAME.LOGIN}
           component={LoginPage}
