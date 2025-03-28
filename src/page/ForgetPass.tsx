@@ -21,6 +21,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { api } from '../utils/api';
+import Toast from 'react-native-toast-message';
 
 type RootStackParamList = {
   Login: undefined;
@@ -101,7 +102,11 @@ const ForgotPassword = () => {
 
       if (response.data.status === true) {
         setSuccess(true);
-        // Alert.alert('Thành công', 'Kiểm tra email để đặt lại mật khẩu!');
+        Toast.show({
+          type: 'success',
+          text2: 'Kiểm tra email để đặt lại mật khẩu!',
+          position: 'top',
+        });
 
 
 

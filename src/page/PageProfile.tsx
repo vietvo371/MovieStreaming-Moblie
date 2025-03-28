@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { TextInput, Button, Surface } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import{ api } from  '../utils/api';
+import { api } from '../utils/api';
+import Toast from 'react-native-toast-message';
 // import { DisplayError } from '../../general/Notification';
 
 interface User {
@@ -84,6 +85,11 @@ export default function PageProfile({ navigation }: { navigation: any }) {
       );
       if (res.data.status) {
         navigation.goBack();
+        Toast.show({
+          type: 'success',
+          text2: res.data.message,
+        });
+
       } else {
         console.log(res)
       }
@@ -140,12 +146,16 @@ export default function PageProfile({ navigation }: { navigation: any }) {
         re_new_pass: re_new_pass,
         old_pass: old_pass,
         new_pass: new_pass,
-        email: user.email,  
+        email: user.email,
       }
       console.log(payload);
       const res = await api.put('/khach-hang/doi-mat-khau', payload);
       if (res.data.status) {
         navigation.goBack();
+        Toast.show({
+          type: 'success',
+          text2: res.data.message,
+        });
       } else {
         console.log(res);
       }

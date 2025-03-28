@@ -42,7 +42,7 @@ const PaymentSuccess = ({ navigation }: { navigation: NavigationProp<any> }) => 
 
         <TouchableOpacity 
           style={styles.button}
-          onPress={() => navigation.navigate("MainApp")}
+          onPress={() => navigation.navigate("Main")}
         >
           <Text style={styles.buttonText}>Bắt đầu xem ngay</Text>
         </TouchableOpacity>

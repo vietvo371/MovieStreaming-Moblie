@@ -13,8 +13,8 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import SCREEN_NAME from '../share/menu';
-import{ api } from  '../utils/api';
-
+import { api } from '../utils/api';
+import Toast from 'react-native-toast-message';
 type MovieDetail = {
   id: number;
   ten_phim: string;
@@ -99,6 +99,15 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
       setLoading(false);
     }
   };
+  const handleWatch = () => {
+    if (isUserTermed) {
+      navigation.navigate(SCREEN_NAME.WATCH_PAGE, { movieSlug: route.params?.movieSlug, episodeSlug: episodeSlug })
+    }
+    else {
+
+      navigation.navigate("Main")
+    }
+  }
   useEffect(() => {
     getMovieDetail();
   }, [route.params?.phim]);
@@ -108,7 +117,8 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
   }, [movie]);
 
 
-  console.log(checkYeuThichLoading);
+
+  // console.log(checkYeuThichLoading);
 
   if (loading) {
     return (
@@ -156,19 +166,24 @@ const DetailFilm = ({ route, navigation }: DetailFilmProps) => {
 
         {/* Action Buttons */}
         <View style={styles.actions}>
-          
-          <Button 
+
+          <Button
             mode="contained"
             style={styles.playButton}
             icon="play"
-            onPress={() =>{
-              if(isUserTermed){
+            onPress={() => {
+              if (isUserTermed) {
                 navigation.navigate(SCREEN_NAME.WATCH_PAGE, { movieSlug: route.params?.movieSlug, episodeSlug: episodeSlug })
               }
-              else{
-                navigation.navigate(SCREEN_NAME.LOGIN)
+              else {
+                Toast.show({
+                  type: 'warning',
+                  text2: 'Vui lòng mua gói Vip để xem phim!',
+                  position: 'top',
+                });
+                navigation.navigate(SCREEN_NAME.GOIVIP)
               }
-            } }
+            }}
           >
             Xem phim
           </Button>

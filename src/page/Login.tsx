@@ -27,11 +27,12 @@ import { saveToken } from '../utils/TokenManager';
 import WebView from 'react-native-webview';
 import SCREEN_NAME from '../share/menu';
 import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import Toast from 'react-native-toast-message';
 
 
 type RootStackParamList = {
   Register: undefined;
-  MainApp: undefined;
+  Main: undefined;
   ForgetPass: undefined;
   GoogleLogin: { url: string };
 };
@@ -81,7 +82,7 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
       if (response.data.status) {
         await saveToken(response.data.token);
         // await saveUser(response.data.user);
-        navigation.replace('MainApp');
+        navigation.navigate('Main');
       } else {
         setError(response.data.message || 'Đăng nhập thất bại');
       }
@@ -135,13 +136,20 @@ const Login = ({ navigation }: { navigation: NativeStackNavigationProp<RootStack
 
       if (response.data.status === true) {
         await saveToken(response.data.token);
-        navigation.replace('MainApp');
+        navigation.replace('Main');
         // Lưu token vào AsyncStorage
-        Alert.alert('Thành công', 'Đăng nhập thành công!');
+        Toast.show({
+          type: 'success',
+          text2: 'Đăng nhập thành công!',
+        });
       }
     } catch (error) {
       console.error('API Error:', error);
-      Alert.alert('Lỗi kết nối', 'Không thể kết nối đến server');
+      Toast.show({
+        type: 'error',
+        text2: 'Lỗi kết nối',
+      });
+      
     }
   };
   return (

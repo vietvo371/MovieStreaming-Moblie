@@ -44,6 +44,7 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         }
         else {
           console.log(res.data.message);
+          
           navigation.navigate(SCREEN_NAME.PAYMENT_ERROR);
         }
       })

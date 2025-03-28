@@ -38,7 +38,7 @@ const Loading = ({ navigation }: { navigation: any }) => {
         const token = await getToken();
         // Wait for animation to complete
         setTimeout(() => {
-          navigation.replace(token ? 'MainApp' : 'Login');
+          navigation.replace(token ? 'Main' : 'Login');
         }, 2000);
       } catch (error) {
         console.log('Error checking token:', error);

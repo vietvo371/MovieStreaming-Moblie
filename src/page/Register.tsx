@@ -23,9 +23,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import { api } from '../utils/api';
 import { saveToken } from '../utils/TokenManager';
 import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import Toast from 'react-native-toast-message';
 type RootStackParamList = {
   Login: undefined;
-  MainApp: undefined;
+  Main: undefined;
 };
 
 const Register = ({ navigation }: { navigation: NativeStackNavigationProp<RootStackParamList> }) => {
@@ -100,13 +101,19 @@ const Register = ({ navigation }: { navigation: NativeStackNavigationProp<RootSt
 
       if (response.data.status === true) {
         await saveToken(response.data.token);
-        navigation.replace('MainApp');
+        navigation.replace('Main');
         // Lưu token vào AsyncStorage
-        Alert.alert('Thành công', 'Đăng nhập thành công!');
+        Toast.show({
+          type: 'success',
+          text2: 'Đăng nhập thành công!',
+        });
       }
     } catch (error) {
       console.error('API Error:', error);
-      Alert.alert('Lỗi kết nối', 'Không thể kết nối đến server');
+      Toast.show({
+        type: 'error',
+        text2: 'Lỗi kết nối',
+      });
     }
   };
 

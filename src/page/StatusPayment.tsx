@@ -138,7 +138,7 @@ const StatusPayment = ({ navigation, route }: { navigation: any, route: any }) =
 
           <TouchableOpacity 
             style={styles.homeButton}
-            onPress={() => navigation.navigate('MainApp')}
+            onPress={() => navigation.navigate('Main')}
           >
             <Icon name="home" size={20} color="#FFFFFF" />
             <Text style={styles.homeButtonText}>Trở về trang chủ</Text>

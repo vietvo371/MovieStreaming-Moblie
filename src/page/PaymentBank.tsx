@@ -15,7 +15,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import{ api } from  '../utils/api';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import SCREEN_NAME from '../share/menu';
-
+import Toast from 'react-native-toast-message';
 interface HoaDon {
     id: number;
     id_goi: number;
@@ -29,6 +29,7 @@ interface HoaDon {
 
 type RootStackParamList = {
     PaymentBank: { id_goi: string };
+    PaymentSuccess: any
 };
 type PaymentBankProps = NativeStackScreenProps<RootStackParamList, 'PaymentBank'>;
 
@@ -51,11 +52,10 @@ const PaymentScreen = ({ route, navigation }: PaymentBankProps) => {
                     setQrCode(res.data.link);
                     setUser(res.data.user);
                 } else {
-                    Alert.alert(
-                        "Lỗi",
-                        res.data.message,
-                        [{ text: "OK", onPress: () => navigation.goBack() }]
-                    );
+                    Toast.show({
+                        type: 'error',
+                        text2: res.data.message,
+                    });
                 }
             })
             .catch((err: any) => {
@@ -87,16 +87,11 @@ const PaymentScreen = ({ route, navigation }: PaymentBankProps) => {
         // Simulate checking payment status
         setTimeout(() => {
             setIsLoading(false);
-            Alert.alert(
-                "Xác nhận thanh toán",
-                "Chúng tôi đang xác nhận giao dịch của bạn. Bạn sẽ nhận được thông báo sau khi xác nhận thành công.",
-                [
-                    {
-                        text: "OK",
-                        // onPress: () => navigation.navigate(SCREEN_NAME.MAIN) // Navigate to Home screen
-                    }
-                ]
-            );
+            Toast.show({
+                type: 'success',
+                text2: 'Thanh toán thành công!',
+            });
+            navigation.navigate("PaymentSuccess")   
         }, 2000);
     };
 
