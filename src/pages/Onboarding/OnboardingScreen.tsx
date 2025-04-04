@@ -24,8 +24,8 @@ const slides = [
   {
     id: '2',
     image: require('../../assets/image/onboarding2.jpg'),
-    title: 'Tải xuống và xem offline',
-    description: 'Lưu nội dung yêu thích của bạn và luôn có thứ gì đó để xem.',
+    title: 'Tích hợp AI thông minh',
+    description: 'Tích hợp AI thông minh để tự động tìm kiếm và xem phim phù hợp với bạn.',
   },
   {
     id: '3',
@@ -43,12 +43,12 @@ const OnboardingScreen = ({ navigation }: { navigation: any }) => {
     if (currentIndex < slides.length - 1) {
       swiperRef.current?.scrollBy(1);
     } else {
-      navigation.replace('Main');
+      navigation.replace('Login');
     }
   };
 
   const handleSkip = () => {
-    navigation.replace('Main');
+    navigation.replace('Login');
   };
 
   return (

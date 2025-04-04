@@ -61,8 +61,8 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
         {isFirstLaunch ? (
           <Stack.Screen name="Onboarding" component={OnboardingScreen} />
         ) : null}
-        <Stack.Screen name="Main" component={TabNavigator} />
         <Stack.Screen name="Loading" component={Loading} />
+        <Stack.Screen name="Main" component={TabNavigator} />
         <Stack.Screen
           name={SCREEN_NAME.LOGIN}
           component={LoginPage}

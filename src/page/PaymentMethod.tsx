@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,8 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import SCREEN_NAME from '../share/menu';
-import{ api } from  '../utils/api';
+import { api } from '../utils/api';
+import Toast from 'react-native-toast-message';
 
 const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
   const route = useRoute();
@@ -20,6 +21,7 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
   const [payUrl, setPayUrl] = useState<string>('');
   const [isLoadingMomo, setIsLoadingMomo] = useState<boolean>(false);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [isGoiVip, setIsGoiVip] = useState<boolean>(false);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -28,6 +30,24 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
     }).format(price);
   };
 
+  const checkGoiVip = () => {
+    api.post('/khach-hang/check-out/process', {
+      id_goi: packageInfo.id,
+    }).then((res) => {
+      console.log(res.data);
+      if (res.data.status === true) {
+        setIsGoiVip(res.data.check);
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
+  const handleHome = () => {
+    Toast.show({
+      text1: 'Bạn đã mua gói Vip không thể mua lại',
+      type: 'warning',
+    });
+  }
   const handlePaymentMomo = () => {
     setIsLoadingMomo(true);
     api.post('khach-hang/thanh-toan/momo/create', {
@@ -44,7 +64,7 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         }
         else {
           console.log(res.data.message);
-          
+
           navigation.navigate(SCREEN_NAME.PAYMENT_ERROR);
         }
       })
@@ -66,7 +86,7 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
             url: res.data.payUrl,
             orderId: packageInfo.id
           });
-          }
+        }
         else {
           console.log(res.data.message);
           navigation.navigate(SCREEN_NAME.PAYMENT_ERROR);
@@ -99,6 +119,9 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         break;
     }
   };
+  useEffect(() => {
+    checkGoiVip();
+  }, [packageInfo]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -190,7 +213,7 @@ const PaymentMethod = ({ navigation }: { navigation: NavigationProp<any> }) => {
         <View style={styles.payButtonContainer}>
           <TouchableOpacity
             style={[styles.payButton, !selectedMethod && styles.payButtonDisabled]}
-            onPress={handlePayment}
+            onPress={isGoiVip ? handleHome : handlePayment}
             disabled={!selectedMethod || isLoadingMomo}
           >
             <Text style={styles.payButtonText}>

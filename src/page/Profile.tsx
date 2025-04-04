@@ -34,7 +34,7 @@ export default function PageProfile({ navigation }: { navigation: any }) {
     });
     GoogleSignin.signOut();
     removeToken();
-    navigation.navigate('Login');
+    navigation.replace('Login');
   };
 
   const getUser = async () => {

@@ -33,7 +33,15 @@ type RootStackParamList = {
 };
 type PaymentBankProps = NativeStackScreenProps<RootStackParamList, 'PaymentBank'>;
 
-
+const setTrueThanhToan = (id_hoa_don: number) => {
+    api.post('/transation/set-status', {
+        id: id_hoa_don,
+    }).then((res) => {
+        console.log(res);
+    }).catch((err) => {
+        console.log(err);
+    }); 
+}
 const PaymentScreen = ({ route, navigation }: PaymentBankProps) => {
     const { id_goi } = route.params || {};
     const [isLoading, setIsLoading] = useState(false);
@@ -83,7 +91,7 @@ const PaymentScreen = ({ route, navigation }: PaymentBankProps) => {
 
     const handlePaymentComplete = () => {
         setIsLoading(true);
-
+        setTrueThanhToan(hoaDon?.id || 0);
         // Simulate checking payment status
         setTimeout(() => {
             setIsLoading(false);

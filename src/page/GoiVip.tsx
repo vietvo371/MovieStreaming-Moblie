@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import axios from 'axios';
 import { NavigationProp } from '@react-navigation/native';
 import SCREEN_NAME from '../share/menu';
-
+import { api } from '../utils/api';
 interface VIPPackage {
   id: number;
   ten_goi: string;
@@ -34,7 +34,7 @@ const GoiVip = ({ navigation }: { navigation: NavigationProp<any> }) => {
 
   const fetchVIPPackages = async () => {
     try {
-      const response = await axios.get('https://wopai-be.dzfullstack.edu.vn/api/lay-data-goi-vip-open');
+      const response = await api.get('/lay-data-goi-vip-open');
       setPackages(response.data.data);
     } catch (error) {
       console.error('Lỗi khi lấy dữ liệu:', error);
