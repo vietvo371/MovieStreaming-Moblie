@@ -25,6 +25,7 @@ const SCREEN_NAME = {
     STATUS_PAYMENT     : 'StatusPayment',
     GOOGLE_LOGIN       : 'GoogleLogin',
     FORGET_PASS        : 'ForgetPass',
+    CHATBOT            : 'Chatbot',
 }
 
 export default SCREEN_NAME;

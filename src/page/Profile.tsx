@@ -99,7 +99,16 @@ export default function PageProfile({ navigation }: { navigation: any }) {
           <Text style={styles.menuText}>Thông tin tài khoản</Text>
           <Icon name="chevron-right" size={24} color="#666" />
         </TouchableOpacity>
-
+        <TouchableOpacity 
+          style={styles.menuItem}
+          onPress={() => navigation.navigate('Wishlist')}
+        >
+          <View style={styles.menuIconContainer}>
+            <Icon name="heart" size={24} color="#FFF" />
+          </View>
+          <Text style={styles.menuText}>Danh sách yêu thích</Text>
+          <Icon name="chevron-right" size={24} color="#666" />
+        </TouchableOpacity>
         <TouchableOpacity 
           style={styles.menuItem}
           onPress={() => navigation.navigate('BillingInfo')}

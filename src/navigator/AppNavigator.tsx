@@ -31,6 +31,7 @@ import PaymentWebView from '../screens/PaymentWebView';
 import StatusPayment from '../page/StatusPayment';
 import GoogleLogin from '../screens/GoogleLogin';
 import ForgetPass from '../page/ForgetPass';
+import Chatbot from '../page/Chatbot';
 const Stack = createStackNavigator();
 
 type ScreensProps = {
@@ -241,6 +242,13 @@ const AppNavigator = ({ TabNavigator }: ScreensProps) => {
             <Stack.Screen
               name={SCREEN_NAME.FORGET_PASS}
               component={ForgetPass}
+              options={{
+                headerShown: false, 
+              }}
+            />
+             <Stack.Screen
+              name={SCREEN_NAME.CHATBOT}
+              component={Chatbot}
               options={{
                 headerShown: false, 
               }}

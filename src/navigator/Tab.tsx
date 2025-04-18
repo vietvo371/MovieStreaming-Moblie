@@ -7,6 +7,7 @@ import WatchlistPage from '../page/WatchlistPage';
 import BlogPage from '../page/Blog';
 import SearchPage from '../page/SearchPage';
 import ProfilePage from '../page/Profile';
+import Chatbot from '../page/Chatbot';
 import GoiVip from '../page/GoiVip';
 const Tab = createBottomTabNavigator();
 
@@ -43,12 +44,12 @@ const TabNavigator = () => {
                 }}
             />
             <Tab.Screen
-                name="Watchlist"
-                component={WatchlistPage}
+                name="Chatbot"
+                component={Chatbot}
                 options={{
-                    tabBarLabel: 'Yêu thích',
+                    tabBarLabel: 'Chatbot',
                     tabBarIcon: ({ color, size }) => (
-                        <Icon name="heart" color={color} size={26} />
+                        <Icon name="robot-outline" color={color} size={26} />
                     ),
                 }}
             />

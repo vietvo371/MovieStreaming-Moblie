@@ -2,8 +2,9 @@ import axios from "axios";
 import { getToken, saveToken } from "./TokenManager";
 import Toast from "react-native-toast-message";
 
-const baseUrl = 'http://192.168.20.20:8000/api';
-// const baseUrl = 'https://wopai.deloydz.com/api';
+// const baseUrl = 'http://192.168.20.20:8000/api';
+const baseUrl = 'https://wopai-be.deloydz.com/api';
+const baseUrlAI = 'http://192.168.20.27:5001';
 const api = axios.create({
     baseURL: baseUrl,
     headers: {
@@ -85,6 +86,21 @@ api.interceptors.response.use(
     //     }
     //     return Promise.reject(error);
     // }
+    
 );
+const apiAI = axios.create({
+    baseURL: baseUrlAI,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
-export { api, baseUrl };
+apiAI.interceptors.request.use(async (config) => {
+    const token = await getToken();
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+export { api, baseUrl ,apiAI};
