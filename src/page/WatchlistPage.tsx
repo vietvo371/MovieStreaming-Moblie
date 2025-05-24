@@ -71,9 +71,19 @@ const WatchlistPage = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Phim yêu thích</Text>
-        <Text style={styles.headerSubtitle}>Danh sách phim bạn đã lưu</Text>
+    <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Icon name="arrow-left" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle}>Lịch sử xem</Text>
+            <Text style={styles.headerSubtitle}>Danh sách phim bạn đã xem</Text>
+          </View>
+        </View>
       </View>
 
       <ScrollView style={styles.content}>
@@ -217,6 +227,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTextContainer: {
+    flex: 1,
+    marginLeft: 16,
   },
 });
 

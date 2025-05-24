@@ -3,8 +3,10 @@ import { getToken, saveToken } from "./TokenManager";
 import Toast from "react-native-toast-message";
 
 // const baseUrl = 'http://192.168.20.20:8000/api';
-const baseUrl = 'https://wopai-be.deloydz.com/api';
-const baseUrlAI = 'http://192.168.20.27:5001';
+// const baseUrl = 'https://wopai-be.deloydz.com/api';
+const baseUrl = 'http://10.0.2.2:8000/api';
+
+const baseUrlAI = 'http://10.0.2.2:5001';
 const api = axios.create({
     baseURL: baseUrl,
     headers: {

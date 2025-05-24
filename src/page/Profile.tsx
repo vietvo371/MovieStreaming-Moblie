@@ -41,7 +41,10 @@ export default function PageProfile({ navigation }: { navigation: any }) {
     try {
       const res = await api.get('/khach-hang/lay-du-lieu-profile');
       if (res.data.status) {
-        setUser(res.data.obj_user);
+        var user = res.data.obj_user;
+        user.avatar = "http://10.0.2.2:8000/uploads/avatars/admins/default_avatar.png"
+        console.log(user);
+        setUser(user);
       } else {
         DisplayError(res);
       }

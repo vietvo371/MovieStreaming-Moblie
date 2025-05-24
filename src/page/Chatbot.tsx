@@ -13,7 +13,8 @@ import {
     ActivityIndicator,
     Dimensions,
     Linking,
-    Pressable
+    Pressable,
+    Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { api, apiAI } from '../utils/api';
@@ -21,6 +22,7 @@ import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Markdown from 'react-native-markdown-display';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import uuid from 'react-native-uuid';
 
 // Types
 interface Message {
@@ -54,10 +56,12 @@ const { width } = Dimensions.get('window');
 
 const Chatbot = () => {
     const navigation = useNavigation();
+    const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [userInput, setUserInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [chatMode, setChatMode] = useState<'movie' | 'vip'>('movie');
+    const [sessionId, setSessionId] = useState<string | null>(null);
     const [preferences, setPreferences] = useState<MoviePreferences>({
         liked_movies: [],
         disliked_movies: [],
@@ -67,6 +71,57 @@ const Chatbot = () => {
     });
     const [movieIdMap, setMovieIdMap] = useState<Record<string, number>>({});
     const scrollViewRef = useRef<ScrollView>(null);
+
+    // Initialize session on component mount
+    useEffect(() => {
+        initSession();
+    }, []);
+
+    // Initialize session
+    const initSession = async () => {
+        try {
+            // Try to get existing session ID from AsyncStorage
+            let storedSessionId = await AsyncStorage.getItem('session_id');
+            
+            if (!storedSessionId) {
+                // If no session ID exists, create a new one using uuid
+                storedSessionId = uuid.v4().toString();
+                await AsyncStorage.setItem('session_id', storedSessionId);
+            }
+            
+            setSessionId(storedSessionId);
+            console.log('Session ID initialized:', storedSessionId);
+            
+            // Load user preferences after session is initialized
+            await loadUserPreferences(storedSessionId);
+        } catch (error) {
+            console.error('Error initializing session:', error);
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Failed to initialize chat session',
+                position: 'bottom'
+            });
+        }
+    };
+
+    // Load user preferences
+    const loadUserPreferences = async (sid: string) => {
+        try {
+            const response = await apiAI.get('/user-preferences', {
+                params: {
+                    session_id: sid
+                }
+            });
+            
+            if (response.data.success && response.data.preferences) {
+                setPreferences(response.data.preferences);
+                console.log('User preferences loaded:', response.data.preferences);
+            }
+        } catch (error) {
+            console.error('Error loading user preferences:', error);
+        }
+    };
 
     // Load saved messages and preferences on component mount
     useEffect(() => {
@@ -143,11 +198,20 @@ const Chatbot = () => {
 
     // Like/unlike a movie
     const toggleLikeMovie = async (movie: Movie) => {
+        if (!sessionId) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Chat session not initialized',
+                position: 'bottom'
+            });
+            return;
+        }
+
         try {
             const movieId = movie.id || hashCode(movie.title);
             const isLiked = isMovieLiked(movieId);
             
-            // Update local state
             if (isLiked) {
                 setPreferences(prev => ({
                     ...prev,
@@ -159,18 +223,17 @@ const Chatbot = () => {
                     liked_movies: [...prev.liked_movies, movieId]
                 }));
                 
-                // Store movie ID mapping
                 setMovieIdMap(prev => ({
                     ...prev,
                     [movie.title]: movieId
                 }));
             }
             
-            // Send to API
             await apiAI.post('/movie-interaction', {
                 movie_id: movieId,
                 interaction_type: isLiked ? 'unlike' : 'like',
-                movie_title: movie.title
+                movie_title: movie.title,
+                session_id: sessionId
             });
             
             Toast.show({
@@ -179,8 +242,8 @@ const Chatbot = () => {
                 text2: movie.title,
                 position: 'bottom'
             });
-        } catch (error) {
-            console.error('Error toggling movie like:', error);
+        } catch (error: any) {
+            console.error('Error toggling movie like:', error.response);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
@@ -270,8 +333,16 @@ const Chatbot = () => {
     // Send message function
     const sendMessage = async () => {
         if (!userInput.trim() || isTyping) return;
+        if (!sessionId) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Chat session not initialized',
+                position: 'bottom'
+            });
+            return;
+        }
 
-        // Add user message
         const userMessage: Message = {
             sender: 'User',
             text: userInput,
@@ -283,13 +354,15 @@ const Chatbot = () => {
         setIsTyping(true);
 
         try {
+            console.log('Sending message with session:', { message: currentInput, session_id: sessionId });
             const response = await apiAI.post('/chat', {
                 message: currentInput,
-                mode: chatMode
+                mode: chatMode,
+                session_id: sessionId
             });
+            console.log('Response:', response.data);
 
             if (response.data.success) {
-                // Add bot response
                 const botMessage: Message = {
                     sender: 'Bot',
                     text: response.data.response,
@@ -298,16 +371,16 @@ const Chatbot = () => {
                 };
                 setMessages(prev => [...prev, botMessage]);
 
-                // Update preferences if provided
                 if (response.data.preferences) {
                     setPreferences(response.data.preferences);
                 }
             }
-        } catch (error) {
+        } catch (error: any) {
+            console.error('Error sending message:', error.response);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Failed to send message',
+                text2: error.response?.data?.message || 'Failed to send message',
                 position: 'bottom'
             });
         } finally {
@@ -338,12 +411,23 @@ const Chatbot = () => {
 
     // Clear chat history
     const clearChat = async () => {
+        if (!sessionId) {
+            Toast.show({
+                type: 'error',
+                text1: 'Error',
+                text2: 'Chat session not initialized',
+                position: 'bottom'
+            });
+            return;
+        }
+
         try {
             await apiAI.post('/reset-preferences', {
                 reset_genres: true,
                 reset_film_types: true,
                 reset_interactions: true,
-                reset_history: true
+                reset_history: true,
+                session_id: sessionId
             });
 
             setMessages([]);
@@ -707,10 +791,6 @@ const Chatbot = () => {
                     </TouchableOpacity>
                 </View>
                 
-                {/* Footer */}
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>Powered by @vietvo371</Text>
-                </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );
@@ -785,15 +865,44 @@ const markdownStyles = StyleSheet.create({
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8f9fb',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)', // Add overlay background
     },
     keyboardAvoidingView: {
         flex: 1,
+        backgroundColor: '#f8f9fb',
+        marginTop: Platform.OS === 'ios' ? 40 : 0, // Add margin for iOS status bar
+    },
+    chatbotButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        width: 75,
+        height: 75,
+        borderRadius: 37.5,
+        backgroundColor: '#e52d27',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 5.84,
+        zIndex: 1000,
+        transform: [{ scale: 1 }], // For animation
+    },
+    chatbotIcon: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 37.5,
     },
     header: {
         backgroundColor: '#e52d27',
         paddingVertical: 15,
         paddingHorizontal: 20,
+        paddingTop: 30,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -811,13 +920,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     headerIcon: {
-        width: 30,
-        height: 30,
-        borderRadius: 15,
-        marginRight: 10,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        marginRight: 12,
     },
     headerText: {
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: 'bold',
         color: 'white',
     },
@@ -827,30 +936,35 @@ const styles = StyleSheet.create({
     },
     modeToggle: {
         flexDirection: 'row',
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        borderRadius: 15,
-        marginRight: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.15)',
+        borderRadius: 28,
+        padding: 3,
+        marginRight: 12,
     },
     modeButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 15,
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 24,
     },
     modeButtonActive: {
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
     },
     modeButtonIcon: {
-        marginRight: 5,
+        marginRight: 6,
     },
     modeButtonText: {
         color: 'white',
-        fontSize: 12,
-        fontWeight: '600',
+        fontSize: 14,
+        fontWeight: '500',
     },
     clearButton: {
-        padding: 5,
+        padding: 8,
+        marginRight: 8,
+    },
+    closeButton: {
+        padding: 8,
     },
 
     // Preferences Styles
@@ -910,6 +1024,7 @@ const styles = StyleSheet.create({
     // Messages Styles
     messagesContainer: {
         flex: 1,
+        backgroundColor: '#f8f9fb',
     },
     messagesContentContainer: {
         paddingVertical: 15,
@@ -918,7 +1033,7 @@ const styles = StyleSheet.create({
     messageWrapper: {
         marginBottom: 15,
         flexDirection: 'row',
-        alignItems: 'flex-end', // Align time below bubble
+        alignItems: 'flex-end',
     },
     userMessageWrapper: {
         justifyContent: 'flex-end',
@@ -935,15 +1050,14 @@ const styles = StyleSheet.create({
     },
     messageBubble: {
         maxWidth: '80%',
-        paddingVertical: 12, // Increased padding
-        paddingHorizontal: 16, // Increased padding
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         borderRadius: 18,
-        // Remove position relative, use alignment in wrapper
     },
     userBubble: {
         backgroundColor: '#e52d27',
         borderBottomRightRadius: 5,
-        alignSelf: 'flex-end', 
+        alignSelf: 'flex-end',
     },
     botBubble: {
         backgroundColor: '#ffffff',
@@ -1013,8 +1127,8 @@ const styles = StyleSheet.create({
     inputContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 10,
+        paddingHorizontal: 18,
+        paddingVertical: 12,
         backgroundColor: '#ffffff',
         borderTopWidth: 1,
         borderTopColor: '#e0e0e0',
@@ -1022,22 +1136,30 @@ const styles = StyleSheet.create({
     input: {
         flex: 1,
         minHeight: 40,
-        maxHeight: 120, // Allow multiple lines but limit height
+        maxHeight: 120,
         backgroundColor: '#f0f0f0',
         borderRadius: 20,
-        paddingHorizontal: 15,
-        paddingVertical: 10, // Adjust vertical padding for multiline
+        paddingHorizontal: 18,
+        paddingVertical: 10,
         fontSize: 16,
-        marginRight: 12, // Slightly increased margin
-        lineHeight: 20, // Improve multiline text readability
+        marginRight: 12,
+        lineHeight: 20,
     },
     sendButton: {
         backgroundColor: '#e52d27',
-        borderRadius: 20,
-        width: 40,
-        height: 40,
+        borderRadius: 25,
+        width: 50,
+        height: 50,
         justifyContent: 'center',
         alignItems: 'center',
+        elevation: 2,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
     },
     sendButtonDisabled: {
         backgroundColor: '#cccccc',
