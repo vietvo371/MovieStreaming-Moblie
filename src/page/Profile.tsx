@@ -14,6 +14,7 @@ import{ api } from  '../utils/api';
 import { removeToken } from '../utils/TokenManager';
 import { DisplayError } from '../../general/Notification';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 interface User {
   id: number;
   ho_va_ten: string;
@@ -34,6 +35,7 @@ export default function PageProfile({ navigation }: { navigation: any }) {
     });
     GoogleSignin.signOut();
     removeToken();
+    AsyncStorage.removeItem('alreadyLaunched');
     navigation.replace('Login');
   };
 

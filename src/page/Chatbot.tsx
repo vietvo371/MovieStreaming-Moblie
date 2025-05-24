@@ -62,6 +62,7 @@ const Chatbot = () => {
     const [isTyping, setIsTyping] = useState(false);
     const [chatMode, setChatMode] = useState<'movie' | 'vip'>('movie');
     const [sessionId, setSessionId] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
     const [preferences, setPreferences] = useState<MoviePreferences>({
         liked_movies: [],
         disliked_movies: [],
@@ -75,6 +76,8 @@ const Chatbot = () => {
     // Initialize session on component mount
     useEffect(() => {
         initSession();
+        // Load userId from AsyncStorage
+        AsyncStorage.getItem('id_user').then(id => setUserId(id));
     }, []);
 
     // Initialize session
@@ -422,14 +425,17 @@ const Chatbot = () => {
         }
 
         try {
-            await apiAI.post('/reset-preferences', {
-                reset_genres: true,
-                reset_film_types: true,
-                reset_interactions: true,
-                reset_history: true,
-                session_id: sessionId
-            });
+            // Send request to reset preferences on server
+            // const response = await apiAI.post('/reset-preferences', {
+            //     reset_genres: true,
+            //     reset_film_types: true,
+            //     reset_interactions: true,
+            //     reset_history: true,
+            //     session_id: sessionId,
+            //     user_id: userId
+            // });
 
+            // Clear local data
             setMessages([]);
             setPreferences({
                 liked_movies: [],
@@ -440,17 +446,22 @@ const Chatbot = () => {
             });
             setMovieIdMap({});
 
+            // Clear AsyncStorage
+            await AsyncStorage.removeItem('chatMessages');
+            await AsyncStorage.removeItem('chatPreferences');
+
             Toast.show({
                 type: 'success',
                 text1: 'Success',
-                text2: 'Chat history cleared',
+                text2: 'Lịch sử trò chuyện và sở thích của bạn đã được xóa',
                 position: 'bottom'
             });
         } catch (error) {
+            console.error("Lỗi khi xóa dữ liệu:", error);
             Toast.show({
                 type: 'error',
                 text1: 'Error',
-                text2: 'Failed to clear chat history',
+                text2: 'Có lỗi xảy ra khi xóa dữ liệu. Vui lòng thử lại sau.',
                 position: 'bottom'
             });
         }
